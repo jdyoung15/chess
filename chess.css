@@ -57,6 +57,12 @@ ol, ul {
   border-right: 1px solid black;
 }
 
+.piece {
+  height: 80px;
+  margin-top: 10px;
+  width: auto;
+}
+
 .kbd-navigation .square:focus {
   background: #ddd;
 }

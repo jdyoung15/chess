@@ -56,6 +56,14 @@
       // React components
       // ##################################################
 
+      function Piece(props) {
+        return (
+          <div>
+            <img src={Chess.findPieceImgName(props.type, props.color)} className="piece"/>
+          </div>
+        );
+      }
+      
       function Square(props) {
         return (
           <button className={"square"}>
@@ -63,7 +71,7 @@
           </button>
         );
       }
-      
+
       class Board extends React.Component {
         renderSquare(i) {
           return (
@@ -99,8 +107,11 @@
       class Game extends React.Component {
         constructor() {
           super();
+          const squares = Array(64).fill(null);
+          squares[48] = <Piece type={Chess.PieceTypeEnum.PAWN} color={Chess.ColorEnum.WHITE} />;
+
           this.state = {
-            squares: Array(64).fill(null),
+            squares: squares
           };
         }
 
