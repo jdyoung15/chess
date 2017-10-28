@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <title>Chess</title>
     <link rel="stylesheet" href="chess.css">
+    <script src="chess.js"></script>
     <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
@@ -56,8 +57,9 @@
       // ##################################################
 
       function Square(props) {
+        const alternate = props.isAlternate ? " alternate" : "";
         return (
-          <button className={"square"}>
+          <button className={"square" + alternate}>
             {props.value}
           </button>
         );
@@ -68,6 +70,7 @@
           return (
             <Square
               value={this.props.squares[i]}
+              isAlternate={Chess.isAlternateSquare(i)}
               key={"square-" + i}
             />
           );
