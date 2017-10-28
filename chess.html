@@ -65,8 +65,9 @@
       }
       
       function Square(props) {
+        const selected = props.isSelected ? " selected" : "";
         return (
-          <button className={"square"}>
+          <button className={"square" + selected} onClick={props.onClick}>
             {props.value}
           </button>
         );
@@ -78,6 +79,8 @@
             <Square
               value={this.props.squares[i]}
               key={"square-" + i}
+              onClick={() => this.props.onClick(i)}
+              isSelected={this.props.selectedSquare === i}
             />
           );
         }
@@ -111,8 +114,41 @@
           squares[48] = <Piece type={Chess.PieceTypeEnum.PAWN} color={Chess.ColorEnum.WHITE} />;
 
           this.state = {
-            squares: squares
+            squares: squares,
+            selectedSquare: null,
           };
+        }
+
+        handleClick(i) {
+          if (this.state.selectedSquare !== null) {
+            const squares = this.state.squares.slice();
+            if (Chess.isValidMove(this.state.selectedSquare, i, squares)) {
+              squares[i] = squares[this.state.selectedSquare];
+              squares[this.state.selectedSquare] = null;
+              this.setState({
+                squares: squares,
+                selectedSquare: null,
+              });
+            } else {
+              this.setState({
+                selectedSquare: null,
+              });
+            }
+          } else if (true) { // todo: if current color
+            this.setState({
+              selectedSquare: i,
+            });
+          }
+          return;
+          
+          // if selectedSquare is not null
+          //   if selectedSquare === i
+          //     unhighlight selectedSquare
+          //   else if i is valid square
+          //     move piece at selectedSquare to i
+          // else if i contains piece belonging to current color
+          //   set selectedSquare to i 
+          // return
         }
 
         render() {
@@ -121,6 +157,8 @@
               <div className="game-board">
                 <Board
                   squares={this.state.squares}
+                  onClick={i => this.handleClick(i)}
+                  selectedSquare={this.state.selectedSquare}
                 />
               </div>
               <div className="game-info">

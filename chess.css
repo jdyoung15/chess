@@ -63,6 +63,10 @@ ol, ul {
   width: auto;
 }
 
+.game-board .board-row .square.selected {
+  background: yellow;
+}
+
 .kbd-navigation .square:focus {
   background: #ddd;
 }
