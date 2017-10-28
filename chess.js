@@ -1,4 +1,11 @@
 var Chess = function() {
+  
+  var Piece = class Piece {
+    constructor(type, color) {
+      this.type = type;
+      this.color = color;
+    }
+  };
 
   var ColorEnum = {
     WHITE: 1,
@@ -62,7 +69,7 @@ var Chess = function() {
   // may return null
   function calculateNewPosition(oldPosition, rows, cols) {
     let newPosition = oldPosition + rows * 8 + cols;
-    if (newPosition < 0 || newPosition >= 64) {
+    if (newPosition <= 0 || newPosition >= 64) {
       newPosition = null;
     }
     return newPosition;
@@ -86,6 +93,7 @@ var Chess = function() {
   }
 
   return {
+    Piece: Piece,
     ColorEnum: ColorEnum,
     PieceTypeEnum: PieceTypeEnum,
     findPieceImgName: findPieceImgName,

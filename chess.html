@@ -66,9 +66,10 @@
       
       function Square(props) {
         const selected = props.isSelected ? " selected" : "";
+        const value = props.value ? <Piece type={props.value.type} color={props.value.color} /> : props.value;
         return (
           <button className={"square" + selected} onClick={props.onClick}>
-            {props.value}
+            {value}
           </button>
         );
       }
@@ -111,7 +112,7 @@
         constructor() {
           super();
           const squares = Array(64).fill(null);
-          squares[48] = <Piece type={Chess.PieceTypeEnum.PAWN} color={Chess.ColorEnum.WHITE} />;
+          squares[48] = new Chess.Piece(Chess.PieceTypeEnum.PAWN, Chess.ColorEnum.WHITE);
 
           this.state = {
             squares: squares,
