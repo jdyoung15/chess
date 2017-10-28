@@ -38,22 +38,22 @@ ol, ul {
 
 .board-row:nth-child(2n) .square:nth-child(2n+1),
 .board-row:nth-child(2n+1) .square:nth-child(2n) {
-  background: #d2b48c; /* tan */
+  background: #d2b48c; /* tan alternate squares */
 }
 
-.board-row:nth-child(1) .square {
+.board-row:first-child .square {
   border-top: 1px solid black;
 }
 
-.board-row:nth-child(8) .square {
+.board-row:last-child .square {
   border-bottom: 1px solid black;
 }
 
-.square:nth-child(1) {
+.square:first-child {
   border-left: 1px solid black;
 }
 
-.square:nth-child(8) {
+.square:last-child {
   border-right: 1px solid black;
 }
 
