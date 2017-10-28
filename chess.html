@@ -57,9 +57,8 @@
       // ##################################################
 
       function Square(props) {
-        const alternate = props.isAlternate ? " alternate" : "";
         return (
-          <button className={"square" + alternate}>
+          <button className={"square"}>
             {props.value}
           </button>
         );
@@ -70,7 +69,6 @@
           return (
             <Square
               value={this.props.squares[i]}
-              isAlternate={Chess.isAlternateSquare(i)}
               key={"square-" + i}
             />
           );

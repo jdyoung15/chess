@@ -19,7 +19,7 @@ ol, ul {
 
 .square {
   background: white;
-  border: 1px solid #999;
+  border: 0; /* 1px solid #999; */
   float: left;
   font-size: 24px;
   font-weight: 200;
@@ -36,8 +36,25 @@ ol, ul {
   outline: none;
 }
 
-.alternate {
-  background: #d2b48c;
+.board-row:nth-child(2n) .square:nth-child(2n+1),
+.board-row:nth-child(2n+1) .square:nth-child(2n) {
+  background: #d2b48c; /* tan */
+}
+
+.board-row:nth-child(1) .square {
+  border-top: 1px solid black;
+}
+
+.board-row:nth-child(8) .square {
+  border-bottom: 1px solid black;
+}
+
+.square:nth-child(1) {
+  border-left: 1px solid black;
+}
+
+.square:nth-child(8) {
+  border-right: 1px solid black;
 }
 
 .kbd-navigation .square:focus {
