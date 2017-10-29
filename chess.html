@@ -113,9 +113,9 @@
           super();
           const squares = Array(64).fill(null);
           squares[46] = new Chess.Piece(Chess.PieceTypeEnum.KING, Chess.ColorEnum.WHITE);
-          squares[6] = new Chess.Piece(Chess.PieceTypeEnum.QUEEN, Chess.ColorEnum.WHITE);
+          squares[38] = new Chess.Piece(Chess.PieceTypeEnum.QUEEN, Chess.ColorEnum.WHITE);
           squares[35] = new Chess.Piece(Chess.PieceTypeEnum.PAWN, Chess.ColorEnum.BLACK);
-          squares[15] = new Chess.Piece(Chess.PieceTypeEnum.ROOK, Chess.ColorEnum.BLACK);
+          squares[14] = new Chess.Piece(Chess.PieceTypeEnum.ROOK, Chess.ColorEnum.BLACK);
           squares[32] = new Chess.Piece(Chess.PieceTypeEnum.KING, Chess.ColorEnum.BLACK);
 
           this.state = {
@@ -132,6 +132,13 @@
               // todo if opponent captured
               squares[i] = squares[this.state.selectedSquare];
               squares[this.state.selectedSquare] = null;
+              // if this move will expose king to check, it is not allowed
+              if (Chess.isKingChecked(this.state.currentPlayer, squares)) {
+                this.setState({
+                  selectedSquare: null,
+                });
+                return;
+              }
               this.setState({
                 squares: squares,
                 selectedSquare: null,
