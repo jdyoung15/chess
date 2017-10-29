@@ -38,33 +38,31 @@ var Chess = function() {
         name: "pawn", 
         value: 0,
         findValidMoves: function(position, board) {
-          const validMoves = [];
+          let validMoves = [];
           const color = board[position].color;
-
-          // move up (or down) one row
-          let newPosition = calculateNewPosition(position, 1 * ColorEnum.properties[color].PAWN_DIRECTION, 0);
-          if (newPosition !== null && board[newPosition] === null) {
-            validMoves.push(newPosition);
-          }
-
-          // if at start position
+          
+          const coordinatesMove = [
+            // move foward one square
+            [1 * ColorEnum.properties[color].PAWN_DIRECTION, 0]
+          ];
           if (this.inStartRow(position, board)) {
-            // move up (or down) two rows
-            newPosition = calculateNewPosition(position, 2 * ColorEnum.properties[color].PAWN_DIRECTION, 0);
-            if (newPosition !== null && board[newPosition] === null) {
-              validMoves.push(newPosition);
-            }
+            // move foward two squares if in start row
+            coordinatesMove.push(
+              [2 * ColorEnum.properties[color].PAWN_DIRECTION, 0]
+            );
           }
-            
-          // if can capture opponent
-          newPosition = calculateNewPosition(position, 1 * ColorEnum.properties[color].PAWN_DIRECTION, -1);
-          if (newPosition !== null && containsOpponent(color, newPosition, board)) {
-            validMoves.push(newPosition);
-          }
-          newPosition = calculateNewPosition(position, 1 * ColorEnum.properties[color].PAWN_DIRECTION, 1);
-          if (newPosition !== null && containsOpponent(color, newPosition, board)) {
-            validMoves.push(newPosition);
-          }
+          validMoves = validMoves.concat(
+            findSquaresAtCoordinates(coordinatesMove, position)
+              .filter(s => !board[s]));
+
+          const coordinatesAttack = [
+            // can attack forward left and forward right if square occupied by opponent
+            [1 * ColorEnum.properties[color].PAWN_DIRECTION, -1],
+            [1 * ColorEnum.properties[color].PAWN_DIRECTION, 1],
+          ]
+          validMoves = validMoves.concat(
+            findSquaresAtCoordinates(coordinatesAttack, position, board)
+              .filter(s => board[s] && board[s].color !== color));
 
           return validMoves;
         }, 
@@ -78,10 +76,7 @@ var Chess = function() {
         value: 1,
         coordinates: [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [2, -1], [2, 1], [1, -2], [1, 2]],
         findValidMoves: function(position, board) {
-          const color = board[position].color;
-
-          return findSquaresAtCoordinates(position, this.coordinates)
-            .filter(s => isValidSquare(s, color));
+          return findValidMovesAtCoordinates(this.coordinates, position, board)
         }, 
       },
       2: {
@@ -89,13 +84,7 @@ var Chess = function() {
         value: 2,
         directions: [[-1, -1], [-1, 1], [1, -1], [1, 1]],
         findValidMoves: function(position, board) {
-          let validMoves = [];
-          const color = board[position].color;
-          
-          return this.directions
-            .map(d => findSquaresInDirection(position, d[0], d[1]))
-            .map(squares => findValidSquaresInDirection(squares, board, color))
-            .reduce((a, b) => a.concat(b));
+          return findValidMovesInDirection(this.directions, position, board);
         }, 
       },
       3: {
@@ -103,13 +92,7 @@ var Chess = function() {
         value: 3,
         directions: [[-1, 0], [1, 0], [0, -1], [0, 1]],
         findValidMoves: function(position, board) {
-          let validMoves = [];
-          const color = board[position].color;
-
-          return this.directions
-            .map(d => findSquaresInDirection(position, d[0], d[1]))
-            .map(squares => findValidSquaresInDirection(squares, board, color))
-            .reduce((a, b) => a.concat(b));
+          return findValidMovesInDirection(this.directions, position, board);
         }, 
       },
       4: {
@@ -117,13 +100,7 @@ var Chess = function() {
         value: 4,
         directions: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]],
         findValidMoves: function(position, board) {
-          let validMoves = [];
-          const color = board[position].color;
-
-          return this.directions
-            .map(d => findSquaresInDirection(position, d[0], d[1]))
-            .map(squares => findValidSquaresInDirection(squares, board, color))
-            .reduce((a, b) => a.concat(b));
+          return findValidMovesInDirection(this.directions, position, board);
         }, 
       },
       5: {
@@ -131,20 +108,30 @@ var Chess = function() {
         value: 5,
         coordinates: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]],
         findValidMoves: function(position, board) {
-          const color = board[position].color;
-
-          return this.findPossibleMoves(position)
-            .filter(s => isValidSquare(s, color))
-            .filter(s => !willResultInCheck(position, s, color, board.slice()));
+          return findValidMovesAtCoordinates(this.coordinates, position, board)
+            .filter(newPosition => !willResultInCheck(position, newPosition, board[position.color], board.slice()));
         }, 
         findPossibleMoves: function(position) {
-          return findSquaresAtCoordinates(position, this.coordinates);
+          return findSquaresAtCoordinates(this.coordinates, position);
         },
       }
     }
   };
 
-  function findSquaresAtCoordinates(position, coordinates) {
+
+  function findValidMovesInDirection(directions, position, board) {
+    return directions
+      .map(d => findSquaresInDirection(position, d[0], d[1]))
+      .map(squares => filterValidSquaresInDirection(squares, board, board[position].color))
+      .reduce((a, b) => a.concat(b));
+  }
+
+  function findValidMovesAtCoordinates(coordinates, position, board) {
+    return findSquaresAtCoordinates(coordinates, position)
+      .filter(s => isValidSquare(board[s], board[position].color));
+  }
+
+  function findSquaresAtCoordinates(coordinates, position) {
     return coordinates
       .map(c => calculateNewPosition(position, c[0], c[1]))
       .filter(s => s);
@@ -172,7 +159,7 @@ var Chess = function() {
     return false;
   }
 
-  function findValidSquaresInDirection(squares, board, color) {
+  function filterValidSquaresInDirection(squares, board, color) {
     const validSquares = [];
     for (let i = 0; i < squares.length; i++) {
       let s = squares[i];
