@@ -43,7 +43,7 @@ var Chess = function() {
 
           // move up (or down) one row
           let newPosition = calculateNewPosition(position, 1 * ColorEnum.properties[color].PAWN_DIRECTION, 0);
-          if (newPosition >= 0 && newPosition < 64 && board[newPosition] === null) {
+          if (newPosition !== null && board[newPosition] === null) {
             validMoves.push(newPosition);
           }
 
@@ -51,18 +51,18 @@ var Chess = function() {
           if (this.inStartRow(position, board)) {
             // move up (or down) two rows
             newPosition = calculateNewPosition(position, 2 * ColorEnum.properties[color].PAWN_DIRECTION, 0);
-            if (newPosition >= 0 && newPosition < 64 && board[newPosition] === null) {
+            if (newPosition !== null && board[newPosition] === null) {
               validMoves.push(newPosition);
             }
           }
             
           // if can capture opponent
           newPosition = calculateNewPosition(position, 1 * ColorEnum.properties[color].PAWN_DIRECTION, -1);
-          if (newPosition >= 0 && newPosition < 64 && containsOpponent(color, newPosition, board)) {
+          if (newPosition !== null && containsOpponent(color, newPosition, board)) {
             validMoves.push(newPosition);
           }
           newPosition = calculateNewPosition(position, 1 * ColorEnum.properties[color].PAWN_DIRECTION, 1);
-          if (newPosition > 0 && newPosition < 64 && containsOpponent(color, newPosition, board)) {
+          if (newPosition !== null && containsOpponent(color, newPosition, board)) {
             validMoves.push(newPosition);
           }
           return validMoves;
@@ -74,11 +74,62 @@ var Chess = function() {
       },
       2: {name: "knight", value: 2},
       3: {name: "bishop", value: 3},
-      4: {name: "rook", value: 4},
+      4: {
+        name: "rook", 
+        value: 4,
+        findValidMoves: function(position, board) {
+          let validMoves = [];
+          const color = board[position].color;
+
+          // find squares above
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, -1, 0));
+          // find squares below
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 1, 0));
+          // find squares left
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 0, -1));
+          // find squares right
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 0, 1));
+
+          return validMoves;
+        }, 
+      },
       5: {name: "queen", value: 5},
       6: {name: "king", value: 6}
     }
   };
+
+  function findValidSquaresInDirection(position, board, rows, cols) {
+    const validMoves = [];
+    const color = board[position].color;
+    findSquaresInDirection(position, rows, cols).every(s => {
+      // if square is occupied, all following squares are invalid moves
+      if (board[s]) {
+        // if current square is occupied by opponent, this square is a valid move (capture)
+        if (board[s].color !== color) {
+          validMoves.push(s);
+        }
+        return false; 
+      } else { // if square is unoccupied, it is a valid move
+        validMoves.push(s);
+        return true;
+      }
+    });
+    return validMoves;
+  }
+
+  function inBounds(position) {
+    return position >= 0 && position < 64;
+  }
+
+  function findSquaresInDirection(position, rows, cols) {
+    const squares = [];
+    let square = calculateNewPosition(position, rows, cols);
+    while (square !== null) {
+      squares.push(square);
+      square = calculateNewPosition(square, rows, cols);
+    }
+    return squares;
+  }
 
   function containsOpponent(color, position, board) {
     return board[position] && board[position].color !== color;
@@ -88,13 +139,20 @@ var Chess = function() {
     return Math.floor(position / 8);
   }
 
+  function findCol(position) {
+    return position % 8;
+  }
+
   // may return null
   function calculateNewPosition(oldPosition, rows, cols) {
-    let newPosition = oldPosition + rows * 8 + cols;
-    if (newPosition < 0 || newPosition >= 64) {
-      newPosition = null;
+    const oldRow = findRow(oldPosition);
+    const oldCol = findCol(oldPosition);
+    const newRow = oldRow + rows;
+    const newCol = oldCol + cols;
+    if (newRow < 0 || newRow > 7 || newCol < 0 || newCol > 7) {
+      return null;
     }
-    return newPosition;
+    return newRow * 8 + newCol;
   }
 
   function findPieceImgName(type, color) {
