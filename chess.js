@@ -65,6 +65,7 @@ var Chess = function() {
           if (newPosition !== null && containsOpponent(color, newPosition, board)) {
             validMoves.push(newPosition);
           }
+
           return validMoves;
         }, 
         inStartRow: function(position, board) {
@@ -159,9 +160,59 @@ var Chess = function() {
       5: {
         name: "king", 
         value: 5,
+        findValidMoves: function(position, board) {
+          const coordinates = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+          let validMoves = [];
+          const color = board[position].color;
+
+          // find squares in above left diagonal
+          coordinates.forEach(c => {
+            let newPosition = calculateNewPosition(position, c[0], c[1]);
+            let square = board[newPosition];
+            if (isValidSquare(square, color)) {
+              validMoves.push(newPosition);
+            }
+          });
+
+          return validMoves.filter(m => !willResultInCheck(position, m, color, board.slice()));
+        }, 
+        findPossibleMoves: function(position) {
+          const coordinates = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+          let possibleMoves = [];
+
+          // find squares in above left diagonal
+          coordinates.forEach(c => {
+            let newPosition = calculateNewPosition(position, c[0], c[1]);
+            possibleMoves.push(newPosition);
+          });
+
+          return possibleMoves;
+        },
       }
     }
   };
+
+  function willResultInCheck(oldPosition, newPosition, color, board) {
+    board[newPosition] = board[oldPosition];
+    board[oldPosition] = null;
+    for (let i = 0; i < board.length; i++) {
+      let currentSquare = board[i];
+      if (!currentSquare || currentSquare.color === color) {
+        continue;
+      }
+      let validMoves;
+      if (currentSquare.type === PieceTypeEnum.KING) {
+        validMoves = PieceTypeEnum.properties[PieceTypeEnum.KING].findPossibleMoves(i);
+      } else {
+        validMoves = PieceTypeEnum.properties[currentSquare.type].findValidMoves(i, board);
+      }
+
+      if (validMoves.includes(newPosition)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   function findValidSquaresInDirection(position, board, rows, cols) {
     const validMoves = [];
