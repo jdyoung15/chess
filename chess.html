@@ -142,7 +142,11 @@
                 selectedSquare: null,
               });
             }
-          } else if (squares[i] && squares[i].color === this.state.currentPlayer) { // todo: if current color
+          } else if (squares[i] && squares[i].color === this.state.currentPlayer) {
+            // selection must be king if king is currently in check
+            if (Chess.isKingChecked(this.state.currentPlayer, squares) && squares[i].type !== Chess.PieceTypeEnum.KING) {
+              return;
+            }
             this.setState({
               selectedSquare: i,
             });

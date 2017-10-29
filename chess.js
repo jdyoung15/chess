@@ -188,9 +188,27 @@ var Chess = function() {
     return newRow * NUM_ROWS + newCol;
   }
 
+  // modifies board
   function willResultInCheck(oldPosition, newPosition, color, board) {
+    // set up board as if king had moved from oldPosition to newPosition
     board[newPosition] = board[oldPosition];
     board[oldPosition] = null;
+    return isKingCheckedAtPosition(newPosition, color, board);
+  }
+
+  function isKingChecked(color, board) {
+    let position;
+    board.some((s, i) => {
+      if (s && s.color === color && s.type === PieceTypeEnum.KING) {
+        position = i;
+        return true;
+      }
+      return false;
+    });
+    return isKingCheckedAtPosition(position, color, board);
+  }
+
+  function isKingCheckedAtPosition(position, color, board) {
     for (let i = 0; i < board.length; i++) {
       let currentSquare = board[i];
       if (!currentSquare || currentSquare.color === color) {
@@ -203,7 +221,7 @@ var Chess = function() {
         validMoves = PieceTypeEnum.properties[currentSquare.type].findValidMoves(i, board);
       }
 
-      if (validMoves.includes(newPosition)) {
+      if (validMoves.includes(position)) {
         return true;
       }
     }
@@ -233,6 +251,7 @@ var Chess = function() {
     PieceTypeEnum: PieceTypeEnum,
     findPieceImgName: findPieceImgName,
     isValidMove: isValidMove,
+    isKingChecked: isKingChecked
   }
 
 }()
