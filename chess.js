@@ -72,7 +72,25 @@ var Chess = function() {
           return ColorEnum.properties[color].PAWN_START_ROW === findRow(position);
         },
       },
-      1: {name: "knight", value: 1},
+      1: {
+        name: "knight", 
+        value: 1,
+        findValidMoves: function(position, board) {
+          const coordinates = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [2, -1], [2, 1], [1, -2], [1, 2]];
+          let validMoves = [];
+          const color = board[position].color;
+
+          // find squares in above left diagonal
+          coordinates.forEach(c => {
+            let newPosition = calculateNewPosition(position, c[0], c[1]);
+            let square = board[newPosition];
+            if (isValidSquare(square, color)) {
+              validMoves.push(newPosition);
+            }
+          });
+          return validMoves;
+        }, 
+      },
       2: {
         name: "bishop", 
         value: 2,
