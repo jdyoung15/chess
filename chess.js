@@ -73,7 +73,25 @@ var Chess = function() {
         },
       },
       1: {name: "knight", value: 1},
-      2: {name: "bishop", value: 2},
+      2: {
+        name: "bishop", 
+        value: 2,
+        findValidMoves: function(position, board) {
+          let validMoves = [];
+          const color = board[position].color;
+
+          // find squares in above left diagonal
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, -1, -1));
+          // find squares in above right diagonal
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, -1, 1));
+          // find squares in bottom left diagonal
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 1, -1));
+          // find squares in bottom right diagonal
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 1, 1));
+
+          return validMoves;
+        }, 
+      },
       3: {
         name: "rook", 
         value: 3,
