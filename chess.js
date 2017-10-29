@@ -1,4 +1,7 @@
 var Chess = function() {
+
+  const NUM_ROWS = 8;
+  const NUM_COLS = 8;
   
   var Piece = class Piece {
     constructor(type, color) {
@@ -14,13 +17,13 @@ var Chess = function() {
       0: {
         name: "white", 
         PAWN_START_ROW: 6, 
-        PAWN_DIRECTION: -1,
+        PAWN_DIRECTION: -1, // up 
         value: 0
       },
       1: {
         name: "black", 
         PAWN_START_ROW: 1, 
-        PAWN_DIRECTION: 1,
+        PAWN_DIRECTION: 1, // down
         value: 1
       }
     }
@@ -118,12 +121,36 @@ var Chess = function() {
     }
   };
 
-
   function findValidMovesInDirection(directions, position, board) {
     return directions
       .map(d => findSquaresInDirection(position, d[0], d[1]))
       .map(squares => filterValidSquaresInDirection(squares, board, board[position].color))
       .reduce((a, b) => a.concat(b));
+  }
+
+  function findSquaresInDirection(position, rows, cols) {
+    const squares = [];
+    let i = calculateNewPosition(position, rows, cols);
+    while (i !== null) {
+      squares.push(i);
+      i = calculateNewPosition(i, rows, cols);
+    }
+    return squares;
+  }
+
+  function filterValidSquaresInDirection(squares, board, color) {
+    const validSquares = [];
+    for (let i = 0; i < squares.length; i++) {
+      let s = squares[i];
+      if (isValidSquare(board[s], color)) {
+        validSquares.push(s);
+      }
+      // if square is occupied, no further squares to consider; exit iteration
+      if (board[s]) {
+        break;
+      }
+    }
+    return validSquares
   }
 
   function findValidMovesAtCoordinates(coordinates, position, board) {
@@ -135,6 +162,30 @@ var Chess = function() {
     return coordinates
       .map(c => calculateNewPosition(position, c[0], c[1]))
       .filter(s => s);
+  }
+
+  function isValidSquare(square, color) {
+    return !square || square.color !== color;
+  }
+
+  function findRow(position) {
+    return Math.floor(position / NUM_ROWS);
+  }
+
+  function findCol(position) {
+    return position % NUM_ROWS;
+  }
+
+  // may return null
+  function calculateNewPosition(oldPosition, rows, cols) {
+    const oldRow = findRow(oldPosition);
+    const oldCol = findCol(oldPosition);
+    const newRow = oldRow + rows;
+    const newCol = oldCol + cols;
+    if (newRow < 0 || newRow >= NUM_ROWS || newCol < 0 || newCol >= NUM_COLS) {
+      return null;
+    }
+    return newRow * NUM_ROWS + newCol;
   }
 
   function willResultInCheck(oldPosition, newPosition, color, board) {
@@ -159,63 +210,6 @@ var Chess = function() {
     return false;
   }
 
-  function filterValidSquaresInDirection(squares, board, color) {
-    const validSquares = [];
-    for (let i = 0; i < squares.length; i++) {
-      let s = squares[i];
-      if (isValidSquare(board[s], color)) {
-        validSquares.push(s);
-      }
-      // if square is occupied, no further squares to consider; exit iteration
-      if (board[s]) {
-        break;
-      }
-    }
-    return validSquares
-  }
-
-  function isValidSquare(square, color) {
-    return !square || square.color !== color;
-  }
-
-  function inBounds(position) {
-    return position >= 0 && position < 64;
-  }
-
-  function findSquaresInDirection(position, rows, cols) {
-    const squares = [];
-    let i = calculateNewPosition(position, rows, cols);
-    while (i !== null) {
-      squares.push(i);
-      i = calculateNewPosition(i, rows, cols);
-    }
-    return squares;
-  }
-
-  function containsOpponent(color, position, board) {
-    return board[position] && board[position].color !== color;
-  }
-
-  function findRow(position) {
-    return Math.floor(position / 8);
-  }
-
-  function findCol(position) {
-    return position % 8;
-  }
-
-  // may return null
-  function calculateNewPosition(oldPosition, rows, cols) {
-    const oldRow = findRow(oldPosition);
-    const oldCol = findCol(oldPosition);
-    const newRow = oldRow + rows;
-    const newCol = oldCol + cols;
-    if (newRow < 0 || newRow > 7 || newCol < 0 || newCol > 7) {
-      return null;
-    }
-    return newRow * 8 + newCol;
-  }
-
   function findPieceImgName(type, color) {
     return "images/" + PieceTypeEnum.properties[type].name + "-" + ColorEnum.properties[color].name + ".png";
   }
@@ -232,6 +226,8 @@ var Chess = function() {
   }
 
   return {
+    NUM_ROWS: NUM_ROWS,
+    NUM_COLS: NUM_COLS,
     Piece: Piece,
     ColorEnum: ColorEnum,
     PieceTypeEnum: PieceTypeEnum,

@@ -88,10 +88,10 @@
 
         render() {
           const board = [];
-          for (let row = 0; row < 8; row++) {
+          for (let row = 0; row < Chess.NUM_ROWS; row++) {
             let squares = [];
-            for (let col = 0; col < 8; col++) {
-              let squarePosition = row * 8 + col;
+            for (let col = 0; col < Chess.NUM_COLS; col++) {
+              let squarePosition = row * Chess.NUM_ROWS + col;
               squares.push(this.renderSquare(squarePosition));
             }
             board.push(
