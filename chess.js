@@ -76,121 +76,79 @@ var Chess = function() {
       1: {
         name: "knight", 
         value: 1,
+        coordinates: [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [2, -1], [2, 1], [1, -2], [1, 2]],
         findValidMoves: function(position, board) {
-          const coordinates = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [2, -1], [2, 1], [1, -2], [1, 2]];
-          let validMoves = [];
           const color = board[position].color;
 
-          // find squares in above left diagonal
-          coordinates.forEach(c => {
-            let newPosition = calculateNewPosition(position, c[0], c[1]);
-            let square = board[newPosition];
-            if (isValidSquare(square, color)) {
-              validMoves.push(newPosition);
-            }
-          });
-          return validMoves;
+          return findSquaresAtCoordinates(position, this.coordinates)
+            .filter(s => isValidSquare(s, color));
         }, 
       },
       2: {
         name: "bishop", 
         value: 2,
+        directions: [[-1, -1], [-1, 1], [1, -1], [1, 1]],
         findValidMoves: function(position, board) {
           let validMoves = [];
           const color = board[position].color;
-
-          // find squares in above left diagonal
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, -1, -1));
-          // find squares in above right diagonal
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, -1, 1));
-          // find squares in bottom left diagonal
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 1, -1));
-          // find squares in bottom right diagonal
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 1, 1));
-
-          return validMoves;
+          
+          return this.directions
+            .map(d => findSquaresInDirection(position, d[0], d[1]))
+            .map(squares => findValidSquaresInDirection(squares, board, color))
+            .reduce((a, b) => a.concat(b));
         }, 
       },
       3: {
         name: "rook", 
         value: 3,
+        directions: [[-1, 0], [1, 0], [0, -1], [0, 1]],
         findValidMoves: function(position, board) {
           let validMoves = [];
           const color = board[position].color;
 
-          // find squares above
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, -1, 0));
-          // find squares below
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 1, 0));
-          // find squares left
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 0, -1));
-          // find squares right
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 0, 1));
-
-          return validMoves;
+          return this.directions
+            .map(d => findSquaresInDirection(position, d[0], d[1]))
+            .map(squares => findValidSquaresInDirection(squares, board, color))
+            .reduce((a, b) => a.concat(b));
         }, 
       },
       4: {
         name: "queen", 
         value: 4,
+        directions: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]],
         findValidMoves: function(position, board) {
           let validMoves = [];
           const color = board[position].color;
 
-          // find squares in above left diagonal
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, -1, -1));
-          // find squares in above right diagonal
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, -1, 1));
-          // find squares in bottom left diagonal
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 1, -1));
-          // find squares in bottom right diagonal
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 1, 1));
-          // find squares above
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, -1, 0));
-          // find squares below
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 1, 0));
-          // find squares left
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 0, -1));
-          // find squares right
-          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 0, 1));
-
-          return validMoves;
+          return this.directions
+            .map(d => findSquaresInDirection(position, d[0], d[1]))
+            .map(squares => findValidSquaresInDirection(squares, board, color))
+            .reduce((a, b) => a.concat(b));
         }, 
       },
       5: {
         name: "king", 
         value: 5,
+        coordinates: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]],
         findValidMoves: function(position, board) {
-          const coordinates = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
-          let validMoves = [];
           const color = board[position].color;
 
-          // find squares in above left diagonal
-          coordinates.forEach(c => {
-            let newPosition = calculateNewPosition(position, c[0], c[1]);
-            let square = board[newPosition];
-            if (isValidSquare(square, color)) {
-              validMoves.push(newPosition);
-            }
-          });
-
-          return validMoves.filter(m => !willResultInCheck(position, m, color, board.slice()));
+          return this.findPossibleMoves(position)
+            .filter(s => isValidSquare(s, color))
+            .filter(s => !willResultInCheck(position, s, color, board.slice()));
         }, 
         findPossibleMoves: function(position) {
-          const coordinates = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
-          let possibleMoves = [];
-
-          // find squares in above left diagonal
-          coordinates.forEach(c => {
-            let newPosition = calculateNewPosition(position, c[0], c[1]);
-            possibleMoves.push(newPosition);
-          });
-
-          return possibleMoves;
+          return findSquaresAtCoordinates(position, this.coordinates);
         },
       }
     }
   };
+
+  function findSquaresAtCoordinates(position, coordinates) {
+    return coordinates
+      .map(c => calculateNewPosition(position, c[0], c[1]))
+      .filter(s => s);
+  }
 
   function willResultInCheck(oldPosition, newPosition, color, board) {
     board[newPosition] = board[oldPosition];
@@ -214,17 +172,19 @@ var Chess = function() {
     return false;
   }
 
-  function findValidSquaresInDirection(position, board, rows, cols) {
-    const validMoves = [];
-    const color = board[position].color;
-    findSquaresInDirection(position, rows, cols).every(s => {
+  function findValidSquaresInDirection(squares, board, color) {
+    const validSquares = [];
+    for (let i = 0; i < squares.length; i++) {
+      let s = squares[i];
       if (isValidSquare(board[s], color)) {
-        validMoves.push(s);
+        validSquares.push(s);
       }
-      // if square is occupied, no further squares to consider; return false to exit iteration
-      return !board[s];
-    });
-    return validMoves;
+      // if square is occupied, no further squares to consider; exit iteration
+      if (board[s]) {
+        break;
+      }
+    }
+    return validSquares
   }
 
   function isValidSquare(square, color) {
@@ -237,10 +197,10 @@ var Chess = function() {
 
   function findSquaresInDirection(position, rows, cols) {
     const squares = [];
-    let square = calculateNewPosition(position, rows, cols);
-    while (square !== null) {
-      squares.push(square);
-      square = calculateNewPosition(square, rows, cols);
+    let i = calculateNewPosition(position, rows, cols);
+    while (i !== null) {
+      squares.push(i);
+      i = calculateNewPosition(i, rows, cols);
     }
     return squares;
   }
