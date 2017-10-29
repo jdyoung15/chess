@@ -118,25 +118,28 @@
           this.state = {
             squares: squares,
             selectedSquare: null,
+            currentPlayer: Chess.ColorEnum.WHITE,
           };
         }
 
         handleClick(i) {
+          const squares = this.state.squares.slice();
           if (this.state.selectedSquare !== null) {
-            const squares = this.state.squares.slice();
             if (Chess.isValidMove(this.state.selectedSquare, i, squares)) {
+              // todo if opponent captured
               squares[i] = squares[this.state.selectedSquare];
               squares[this.state.selectedSquare] = null;
               this.setState({
                 squares: squares,
                 selectedSquare: null,
+                currentPlayer: this.state.currentPlayer === Chess.ColorEnum.WHITE ? Chess.ColorEnum.BLACK : Chess.ColorEnum.WHITE,
               });
             } else {
               this.setState({
                 selectedSquare: null,
               });
             }
-          } else if (true) { // todo: if current color
+          } else if (squares[i] && squares[i].color === this.state.currentPlayer) { // todo: if current color
             this.setState({
               selectedSquare: i,
             });
