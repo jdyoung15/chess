@@ -112,8 +112,8 @@
         constructor() {
           super();
           const squares = Array(64).fill(null);
-          squares[48] = new Chess.Piece(Chess.PieceTypeEnum.BISHOP, Chess.ColorEnum.WHITE);
-          squares[32] = new Chess.Piece(Chess.PieceTypeEnum.BISHOP, Chess.ColorEnum.BLACK);
+          squares[48] = new Chess.Piece(Chess.PieceTypeEnum.QUEEN, Chess.ColorEnum.WHITE);
+          squares[32] = new Chess.Piece(Chess.PieceTypeEnum.QUEEN, Chess.ColorEnum.BLACK);
 
           this.state = {
             squares: squares,

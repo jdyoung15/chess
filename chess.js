@@ -111,7 +111,33 @@ var Chess = function() {
           return validMoves;
         }, 
       },
-      4: {name: "queen", value: 4},
+      4: {
+        name: "queen", 
+        value: 4,
+        findValidMoves: function(position, board) {
+          let validMoves = [];
+          const color = board[position].color;
+
+          // find squares in above left diagonal
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, -1, -1));
+          // find squares in above right diagonal
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, -1, 1));
+          // find squares in bottom left diagonal
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 1, -1));
+          // find squares in bottom right diagonal
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 1, 1));
+          // find squares above
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, -1, 0));
+          // find squares below
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 1, 0));
+          // find squares left
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 0, -1));
+          // find squares right
+          validMoves = validMoves.concat(findValidSquaresInDirection(position, board, 0, 1));
+
+          return validMoves;
+        }, 
+      },
       5: {name: "king", value: 5}
     }
   };
