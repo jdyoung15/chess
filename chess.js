@@ -8,35 +8,35 @@ var Chess = function() {
   };
 
   var ColorEnum = {
-    WHITE: 1,
-    BLACK: 2,
+    WHITE: 0,
+    BLACK: 1,
     properties: {
-      1: {
+      0: {
         name: "white", 
         PAWN_START_ROW: 6, 
         PAWN_DIRECTION: -1,
-        value: 1
+        value: 0
       },
-      2: {
+      1: {
         name: "black", 
         PAWN_START_ROW: 1, 
         PAWN_DIRECTION: 1,
-        value: 2
+        value: 1
       }
     }
   };
 
   var PieceTypeEnum = {
-    PAWN: 1,
-    KNIGHT: 2,
-    BISHOP: 3,
-    ROOK: 4,
-    QUEEN: 5,
-    KING: 6,
+    PAWN: 0,
+    KNIGHT: 1,
+    BISHOP: 2,
+    ROOK: 3,
+    QUEEN: 4,
+    KING: 5,
     properties: {
-      1: {
+      0: {
         name: "pawn", 
-        value: 1,
+        value: 0,
         findValidMoves: function(position, board) {
           const validMoves = [];
           const color = board[position].color;
@@ -72,11 +72,11 @@ var Chess = function() {
           return ColorEnum.properties[color].PAWN_START_ROW === findRow(position);
         },
       },
-      2: {name: "knight", value: 2},
-      3: {name: "bishop", value: 3},
-      4: {
+      1: {name: "knight", value: 1},
+      2: {name: "bishop", value: 2},
+      3: {
         name: "rook", 
-        value: 4,
+        value: 3,
         findValidMoves: function(position, board) {
           let validMoves = [];
           const color = board[position].color;
@@ -93,8 +93,8 @@ var Chess = function() {
           return validMoves;
         }, 
       },
-      5: {name: "queen", value: 5},
-      6: {name: "king", value: 6}
+      4: {name: "queen", value: 4},
+      5: {name: "king", value: 5}
     }
   };
 
