@@ -138,7 +138,10 @@ var Chess = function() {
           return validMoves;
         }, 
       },
-      5: {name: "king", value: 5}
+      5: {
+        name: "king", 
+        value: 5,
+      }
     }
   };
 
@@ -146,19 +149,17 @@ var Chess = function() {
     const validMoves = [];
     const color = board[position].color;
     findSquaresInDirection(position, rows, cols).every(s => {
-      // if square is occupied, all following squares are invalid moves
-      if (board[s]) {
-        // if current square is occupied by opponent, this square is a valid move (capture)
-        if (board[s].color !== color) {
-          validMoves.push(s);
-        }
-        return false; 
-      } else { // if square is unoccupied, it is a valid move
+      if (isValidSquare(board[s], color)) {
         validMoves.push(s);
-        return true;
       }
+      // if square is occupied, no further squares to consider; return false to exit iteration
+      return !board[s];
     });
     return validMoves;
+  }
+
+  function isValidSquare(square, color) {
+    return !square || square.color !== color;
   }
 
   function inBounds(position) {
