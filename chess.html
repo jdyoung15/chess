@@ -89,14 +89,14 @@
         render() {
           const board = [];
           for (let row = 0; row < Chess.NUM_ROWS; row++) {
-            let squares = [];
+            let rowSquares = [];
             for (let col = 0; col < Chess.NUM_COLS; col++) {
-              let squarePosition = row * Chess.NUM_ROWS + col;
-              squares.push(this.renderSquare(squarePosition));
+              let position = row * Chess.NUM_ROWS + col;
+              rowSquares.push(this.renderSquare(position));
             }
             board.push(
               <div className="board-row" key={"board-row-" + row}>
-                {squares}
+                {rowSquares}
               </div>
             );
           }
@@ -121,12 +121,13 @@
         handleClick(i) {
           const squares = this.state.squares.slice();
           if (this.state.selectedSquare !== null) {
+            // Piece has already been selected. Current selection indicates where the piece should be moved
             if (Chess.isValidMove(this.state.selectedSquare, i, squares)) {
               // todo if opponent captured
               squares[i] = squares[this.state.selectedSquare];
               squares[this.state.selectedSquare] = null;
-              // if this move will expose king to check, it is not allowed
               if (Chess.isKingChecked(this.state.currentPlayer, squares)) {
+                // this move will expose king to check or does not prevent check, it is not allowed
                 this.setState({
                   selectedSquare: null,
                 });
@@ -135,7 +136,7 @@
               this.setState({
                 squares: squares,
                 selectedSquare: null,
-                currentPlayer: this.state.currentPlayer === Chess.ColorEnum.WHITE ? Chess.ColorEnum.BLACK : Chess.ColorEnum.WHITE,
+                currentPlayer: Chess.findNextPlayer(this.state.currentPlayer),
               });
             } else {
               this.setState({
@@ -143,6 +144,7 @@
               });
             }
           } else if (squares[i] && squares[i].color === this.state.currentPlayer) {
+            // piece has been selected
             if (!Chess.hasValidMoves(i, squares)) {
               return;
             }
@@ -164,7 +166,7 @@
           const squares = this.state.squares.slice();
           let displayText;
           if (Chess.isCheckmate(this.state.currentPlayer, squares)) {
-            const winner = this.state.currentPlayer === Chess.ColorEnum.WHITE ? Chess.ColorEnum.BLACK : Chess.ColorEnum.WHITE;
+            const winner = Chess.findNextPlayer(this.state.currentPlayer);
             displayText = "Winner: " + Chess.ColorEnum.properties[winner].name;
           } else {
             displayText = "Turn: " + Chess.ColorEnum.properties[this.state.currentPlayer].name;
@@ -190,7 +192,6 @@
       // ========================================
       
       ReactDOM.render(<Game />, document.getElementById("root"));
-      
 
     </script>
   </body>

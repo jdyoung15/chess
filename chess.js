@@ -179,14 +179,6 @@ var Chess = function() {
     return !square || square.color !== color;
   }
 
-  function findRow(position) {
-    return Math.floor(position / NUM_ROWS);
-  }
-
-  function findCol(position) {
-    return position % NUM_ROWS;
-  }
-
   // may return null
   function calculateNewPosition(oldPosition, rows, cols) {
     const oldRow = findRow(oldPosition);
@@ -197,6 +189,14 @@ var Chess = function() {
       return null;
     }
     return newRow * NUM_ROWS + newCol;
+  }
+
+  function findRow(position) {
+    return Math.floor(position / NUM_ROWS);
+  }
+
+  function findCol(position) {
+    return position % NUM_ROWS;
   }
 
   function isCheckmate(color, board) {
@@ -267,12 +267,12 @@ var Chess = function() {
     });
     return position;
   }
+
   function findPieceImgName(type, color) {
     return "images/" + PieceTypeEnum.properties[type].name + "-" + ColorEnum.properties[color].name + ".png";
   }
   
   function isValidMove(startPosition, endPosition, board) {
-    // todo check that piece exists at start position
     return findValidMoves(startPosition, board).includes(endPosition);
   }
 
@@ -302,6 +302,10 @@ var Chess = function() {
     return board;
   }
 
+  function findNextPlayer(currentPlayer) {
+    return currentPlayer === ColorEnum.WHITE ? ColorEnum.BLACK : ColorEnum.WHITE;
+  }
+
   return {
     NUM_ROWS: NUM_ROWS,
     NUM_COLS: NUM_COLS,
@@ -315,6 +319,7 @@ var Chess = function() {
     canBlockCheck: canBlockCheck,
     isCheckmate: isCheckmate,
     hasValidMoves: hasValidMoves,
+    findNextPlayer: findNextPlayer,
   }
 
 }()
