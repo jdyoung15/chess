@@ -200,6 +200,7 @@ var Chess = function() {
   }
 
   function isCheckmate(color, board) {
+    // create array from 0 to 64
     const positions = Array.apply(null, {length: NUM_ROWS * NUM_COLS}).map(Function.call, Number);
     // figure out squares that can block check
     const kingPosition = findKingPosition(color, board);
@@ -275,6 +276,10 @@ var Chess = function() {
     return findValidMoves(startPosition, board).includes(endPosition);
   }
 
+  function hasValidMoves(position, board) {
+    return findValidMoves(position, board).length > 0;
+  }
+
   // returns a list of positions where the piece at the given position can move
   function findValidMoves(position, board) {
     const piece = board[position];
@@ -309,6 +314,7 @@ var Chess = function() {
     createInitialSquares: createInitialSquares,
     canBlockCheck: canBlockCheck,
     isCheckmate: isCheckmate,
+    hasValidMoves: hasValidMoves,
   }
 
 }()

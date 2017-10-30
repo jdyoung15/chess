@@ -143,6 +143,9 @@
               });
             }
           } else if (squares[i] && squares[i].color === this.state.currentPlayer) {
+            if (!Chess.hasValidMoves(i, squares)) {
+              return;
+            }
             // selection must be king or appropriate piece if king is currently in check
             if (Chess.isKingChecked(this.state.currentPlayer, squares)
               && !Chess.canBlockCheck(i, squares)
