@@ -143,8 +143,11 @@
               });
             }
           } else if (squares[i] && squares[i].color === this.state.currentPlayer) {
-            // selection must be king if king is currently in check
-            if (Chess.isKingChecked(this.state.currentPlayer, squares) && squares[i].type !== Chess.PieceTypeEnum.KING) {
+            // selection must be king or appropriate piece if king is currently in check
+            if (Chess.isKingChecked(this.state.currentPlayer, squares)
+              && !Chess.canBlockCheck(i, squares)
+              && squares[i].type !== Chess.PieceTypeEnum.KING)
+            {
               return;
             }
             this.setState({

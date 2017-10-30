@@ -208,15 +208,7 @@ var Chess = function() {
   }
 
   function isKingChecked(color, board) {
-    let position;
-    board.some((s, i) => {
-      if (s && s.color === color && s.type === PieceTypeEnum.KING) {
-        position = i;
-        return true;
-      }
-      return false;
-    });
-    return isKingCheckedAtPosition(position, color, board);
+    return isKingCheckedAtPosition(findKingPosition(color, board), color, board);
   }
 
   function isKingCheckedAtPosition(position, color, board) {
@@ -239,6 +231,29 @@ var Chess = function() {
     return false;
   }
 
+  // assumes king is currently checked
+  function canBlockCheck(position, board) {
+    const color = board[position].color;
+    const kingPosition = findKingPosition(color, board);
+    return findValidMoves(position, board).some(s => {
+      let boardCopy = board.slice();
+      boardCopy[s] = boardCopy[position];
+      boardCopy[position] = null;
+      return !isKingCheckedAtPosition(kingPosition, color, boardCopy);
+    });
+  }
+
+  function findKingPosition(color, board) {
+    let position;
+    board.some((s, i) => {
+      if (s && s.color === color && s.type === PieceTypeEnum.KING) {
+        position = i;
+        return true;
+      }
+      return false;
+    });
+    return position;
+  }
   function findPieceImgName(type, color) {
     return "images/" + PieceTypeEnum.properties[type].name + "-" + ColorEnum.properties[color].name + ".png";
   }
@@ -280,6 +295,7 @@ var Chess = function() {
     isValidMove: isValidMove,
     isKingChecked: isKingChecked,
     createInitialSquares: createInitialSquares,
+    canBlockCheck: canBlockCheck,
   }
 
 }()
