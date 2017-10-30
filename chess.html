@@ -111,15 +111,15 @@
       class Game extends React.Component {
         constructor() {
           super();
-          const squares = Array(64).fill(null);
-          squares[46] = new Chess.Piece(Chess.PieceTypeEnum.KING, Chess.ColorEnum.WHITE);
-          squares[38] = new Chess.Piece(Chess.PieceTypeEnum.QUEEN, Chess.ColorEnum.WHITE);
-          squares[35] = new Chess.Piece(Chess.PieceTypeEnum.PAWN, Chess.ColorEnum.BLACK);
-          squares[14] = new Chess.Piece(Chess.PieceTypeEnum.ROOK, Chess.ColorEnum.BLACK);
-          squares[32] = new Chess.Piece(Chess.PieceTypeEnum.KING, Chess.ColorEnum.BLACK);
+          //const squares = Array(64).fill(null);
+          //squares[] = new Chess.Piece(Chess.PieceTypeEnum.KING, Chess.ColorEnum.WHITE);
+          //squares[] = new Chess.Piece(Chess.PieceTypeEnum.QUEEN, Chess.ColorEnum.WHITE);
+          //squares[] = new Chess.Piece(Chess.PieceTypeEnum.PAWN, Chess.ColorEnum.BLACK);
+          //squares[] = new Chess.Piece(Chess.PieceTypeEnum.ROOK, Chess.ColorEnum.BLACK);
+          //squares[] = new Chess.Piece(Chess.PieceTypeEnum.KING, Chess.ColorEnum.BLACK);
 
           this.state = {
-            squares: squares,
+            squares: Chess.createInitialSquares(),
             selectedSquare: null,
             currentPlayer: Chess.ColorEnum.WHITE,
           };

@@ -2,7 +2,7 @@ var Chess = function() {
 
   const NUM_ROWS = 8;
   const NUM_COLS = 8;
-  
+
   var Piece = class Piece {
     constructor(type, color) {
       this.type = type;
@@ -121,6 +121,17 @@ var Chess = function() {
     }
   };
 
+  const PIECES_STARTING_ORDER = [
+    PieceTypeEnum.ROOK,
+    PieceTypeEnum.KNIGHT,
+    PieceTypeEnum.BISHOP,
+    PieceTypeEnum.QUEEN,
+    PieceTypeEnum.KING,
+    PieceTypeEnum.BISHOP,
+    PieceTypeEnum.KNIGHT,
+    PieceTypeEnum.ROOK,
+  ];
+  
   function findValidMovesInDirection(directions, position, board) {
     return directions
       .map(d => findSquaresInDirection(position, d[0], d[1]))
@@ -243,6 +254,22 @@ var Chess = function() {
     return PieceTypeEnum.properties[piece.type].findValidMoves(position, board);
   }
 
+  function createInitialSquares() {
+    const board = Array(64).fill(null);
+
+    for (let i = 0; i < NUM_ROWS; i++) {
+      board[i] = new Piece(PIECES_STARTING_ORDER[i], ColorEnum.BLACK);
+      board[calculateNewPosition(i, 7, 0)] = new Piece(PIECES_STARTING_ORDER[i], ColorEnum.WHITE);
+    }
+
+    for (let i = NUM_ROWS; i < NUM_ROWS * 2; i++) {
+      board[i] = new Piece(PieceTypeEnum.PAWN, ColorEnum.BLACK);
+      board[calculateNewPosition(i, 5, 0)] = new Piece(PieceTypeEnum.PAWN, ColorEnum.WHITE);
+    }
+
+    return board;
+  }
+
   return {
     NUM_ROWS: NUM_ROWS,
     NUM_COLS: NUM_COLS,
@@ -251,7 +278,8 @@ var Chess = function() {
     PieceTypeEnum: PieceTypeEnum,
     findPieceImgName: findPieceImgName,
     isValidMove: isValidMove,
-    isKingChecked: isKingChecked
+    isKingChecked: isKingChecked,
+    createInitialSquares: createInitialSquares,
   }
 
 }()
