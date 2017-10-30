@@ -111,13 +111,6 @@
       class Game extends React.Component {
         constructor() {
           super();
-          //const squares = Array(64).fill(null);
-          //squares[] = new Chess.Piece(Chess.PieceTypeEnum.KING, Chess.ColorEnum.WHITE);
-          //squares[] = new Chess.Piece(Chess.PieceTypeEnum.QUEEN, Chess.ColorEnum.WHITE);
-          //squares[] = new Chess.Piece(Chess.PieceTypeEnum.PAWN, Chess.ColorEnum.BLACK);
-          //squares[] = new Chess.Piece(Chess.PieceTypeEnum.ROOK, Chess.ColorEnum.BLACK);
-          //squares[] = new Chess.Piece(Chess.PieceTypeEnum.KING, Chess.ColorEnum.BLACK);
-
           this.state = {
             squares: Chess.createInitialSquares(),
             selectedSquare: null,
@@ -162,6 +155,8 @@
         }
 
         render() {
+          let turn = Chess.ColorEnum.properties[this.state.currentPlayer].name;
+          turn = turn.charAt(0).toUpperCase() + turn.slice(1);
           return (
             <div className="game">
               <div className="game-board">
@@ -172,7 +167,7 @@
                 />
               </div>
               <div className="game-info">
-                <div></div>
+                <div>Turn: {turn}</div>
               </div>
             </div>
           );
