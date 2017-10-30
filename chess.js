@@ -199,6 +199,18 @@ var Chess = function() {
     return newRow * NUM_ROWS + newCol;
   }
 
+  function isCheckmate(color, board) {
+    const positions = Array.apply(null, {length: NUM_ROWS * NUM_COLS}).map(Function.call, Number);
+    // figure out squares that can block check
+    const kingPosition = findKingPosition(color, board);
+    return isKingCheckedAtPosition(kingPosition, color, board)
+      && PieceTypeEnum.properties[PieceTypeEnum.KING].findValidMoves(kingPosition, board).length === 0
+      && positions
+        .filter(p => board[p] && board[p].color === color)
+        .filter(p => canBlockCheck(p, board))
+        .length === 0;
+  }
+
   // modifies board
   function willResultInCheck(oldPosition, newPosition, color, board) {
     // set up board as if king had moved from oldPosition to newPosition
@@ -296,6 +308,7 @@ var Chess = function() {
     isKingChecked: isKingChecked,
     createInitialSquares: createInitialSquares,
     canBlockCheck: canBlockCheck,
+    isCheckmate: isCheckmate,
   }
 
 }()

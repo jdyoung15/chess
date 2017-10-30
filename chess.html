@@ -158,19 +158,26 @@
         }
 
         render() {
-          let turn = Chess.ColorEnum.properties[this.state.currentPlayer].name;
-          turn = turn.charAt(0).toUpperCase() + turn.slice(1);
+          const squares = this.state.squares.slice();
+          let displayText;
+          if (Chess.isCheckmate(this.state.currentPlayer, squares)) {
+            const winner = this.state.currentPlayer === Chess.ColorEnum.WHITE ? Chess.ColorEnum.BLACK : Chess.ColorEnum.WHITE;
+            displayText = "Winner: " + Chess.ColorEnum.properties[winner].name;
+          } else {
+            displayText = "Turn: " + Chess.ColorEnum.properties[this.state.currentPlayer].name;
+          }
+
           return (
             <div className="game">
               <div className="game-board">
                 <Board
-                  squares={this.state.squares}
+                  squares={squares}
                   onClick={i => this.handleClick(i)}
                   selectedSquare={this.state.selectedSquare}
                 />
               </div>
               <div className="game-info">
-                <div>Turn: {turn}</div>
+                <div>{displayText}</div>
               </div>
             </div>
           );
