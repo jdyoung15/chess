@@ -210,7 +210,7 @@ var Chess = function() {
       && PieceTypeEnum.properties[PieceTypeEnum.KING].findValidMoves(kingPosition, board, previousMoves).length === 0
       && positions
         .filter(p => board[p] && board[p].color === color)
-        .filter(p => canBlockCheck(p, board))
+        .filter(p => canBlockCheck(p, board, previousMoves))
         .length === 0;
   }
 
