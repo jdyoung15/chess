@@ -1,16 +1,30 @@
 var Chess = function() {
 
+  //
+  // Constants
+  //
+
   const NUM_ROWS = 8;
   const NUM_COLS = 8;
 
-  var Piece = class Piece {
+
+  // 
+  // Classes 
+  //
+
+  const Piece = class Piece {
     constructor(type, color) {
       this.type = type;
       this.color = color;
     }
   };
 
-  var ColorEnum = {
+
+  //
+  // Enums
+  //
+
+  const ColorEnum = {
     WHITE: 0,
     BLACK: 1,
     properties: {
@@ -29,7 +43,7 @@ var Chess = function() {
     }
   };
 
-  var PieceTypeEnum = {
+  const PieceTypeEnum = {
     PAWN: 0,
     KNIGHT: 1,
     BISHOP: 2,
@@ -133,7 +147,37 @@ var Chess = function() {
     PieceTypeEnum.KNIGHT,
     PieceTypeEnum.ROOK,
   ];
+
+
+  //
+  // Square and move functions
+  //
+
+  function isValidMove(startPosition, endPosition, board, previousMoves) {
+    return findValidMoves(startPosition, board, previousMoves).includes(endPosition);
+  }
+
+  function hasValidMoves(position, board, previousMoves) {
+    return findValidMoves(position, board, previousMoves).length > 0;
+  }
+
+  // returns a list of positions where the piece at the given position can move
+  function findValidMoves(position, board, previousMoves) {
+    const piece = board[position];
+    return PieceTypeEnum.properties[piece.type].findValidMoves(position, board, previousMoves);
+  }
   
+  function findValidMovesAtCoordinates(coordinates, position, board) {
+    return findSquaresAtCoordinates(coordinates, position)
+      .filter(s => isValidSquare(board[s], board[position].color));
+  }
+
+  function findSquaresAtCoordinates(coordinates, position) {
+    return coordinates
+      .map(c => calculateNewPosition(position, c[0], c[1]))
+      .filter(s => s);
+  }
+
   function findValidMovesInDirection(directions, position, board) {
     return directions
       .map(d => findSquaresInDirection(position, d[0], d[1]))
@@ -166,17 +210,6 @@ var Chess = function() {
     return validSquares
   }
 
-  function findValidMovesAtCoordinates(coordinates, position, board) {
-    return findSquaresAtCoordinates(coordinates, position)
-      .filter(s => isValidSquare(board[s], board[position].color));
-  }
-
-  function findSquaresAtCoordinates(coordinates, position) {
-    return coordinates
-      .map(c => calculateNewPosition(position, c[0], c[1]))
-      .filter(s => s);
-  }
-
   function isValidSquare(square, color) {
     return !square || square.color !== color;
   }
@@ -201,6 +234,11 @@ var Chess = function() {
     return position % NUM_ROWS;
   }
 
+
+  //
+  // Check/checkmate functions
+  //
+
   function isCheckmate(color, board, previousMoves) {
     // create array from 0 to 64
     const positions = Array.apply(null, {length: NUM_ROWS * NUM_COLS}).map(Function.call, Number);
@@ -214,12 +252,16 @@ var Chess = function() {
         .length === 0;
   }
 
-  // modifies board
-  function willResultInCheck(oldPosition, newPosition, color, board, previousMoves) {
-    // set up board as if king had moved from oldPosition to newPosition
-    board[newPosition] = board[oldPosition];
-    board[oldPosition] = null;
-    return isKingCheckedAtPosition(newPosition, color, board, previousMoves);
+  function findKingPosition(color, board) {
+    let position;
+    board.some((s, i) => {
+      if (s && s.color === color && s.type === PieceTypeEnum.KING) {
+        position = i;
+        return true;
+      }
+      return false;
+    });
+    return position;
   }
 
   function isKingChecked(color, board, previousMoves) {
@@ -258,21 +300,18 @@ var Chess = function() {
     });
   }
 
-  function findKingPosition(color, board) {
-    let position;
-    board.some((s, i) => {
-      if (s && s.color === color && s.type === PieceTypeEnum.KING) {
-        position = i;
-        return true;
-      }
-      return false;
-    });
-    return position;
+  // modifies board
+  function willResultInCheck(oldPosition, newPosition, color, board, previousMoves) {
+    // set up board as if king had moved from oldPosition to newPosition
+    board[newPosition] = board[oldPosition];
+    board[oldPosition] = null;
+    return isKingCheckedAtPosition(newPosition, color, board, previousMoves);
   }
 
-  function findPieceImgName(type, color) {
-    return "images/" + PieceTypeEnum.properties[type].name + "-" + ColorEnum.properties[color].name + ".png";
-  }
+
+  // 
+  // En passant functions
+  //
 
   function isEnPassantMove(startPosition, endPosition, board, previousMoves) {
     if (!board[startPosition] || board[startPosition].type !== PieceTypeEnum.PAWN || previousMoves.length < 1) {
@@ -297,19 +336,10 @@ var Chess = function() {
     return calculateNewPosition(position, -1 * ColorEnum.properties[color].PAWN_DIRECTION, 0);
   }
   
-  function isValidMove(startPosition, endPosition, board, previousMoves) {
-    return findValidMoves(startPosition, board, previousMoves).includes(endPosition);
-  }
 
-  function hasValidMoves(position, board, previousMoves) {
-    return findValidMoves(position, board, previousMoves).length > 0;
-  }
-
-  // returns a list of positions where the piece at the given position can move
-  function findValidMoves(position, board, previousMoves) {
-    const piece = board[position];
-    return PieceTypeEnum.properties[piece.type].findValidMoves(position, board, previousMoves);
-  }
+  // 
+  // Miscellaneous functions
+  //
 
   function createInitialSquares() {
     const board = Array(64).fill(null);
@@ -331,22 +361,27 @@ var Chess = function() {
     return currentPlayer === ColorEnum.WHITE ? ColorEnum.BLACK : ColorEnum.WHITE;
   }
 
+  function findPieceImgName(type, color) {
+    return "images/" + PieceTypeEnum.properties[type].name + "-" + ColorEnum.properties[color].name + ".png";
+  }
+
+
   return {
     NUM_ROWS: NUM_ROWS,
     NUM_COLS: NUM_COLS,
     Piece: Piece,
     ColorEnum: ColorEnum,
     PieceTypeEnum: PieceTypeEnum,
-    findPieceImgName: findPieceImgName,
     isValidMove: isValidMove,
-    isKingChecked: isKingChecked,
-    createInitialSquares: createInitialSquares,
-    canBlockCheck: canBlockCheck,
-    isCheckmate: isCheckmate,
     hasValidMoves: hasValidMoves,
-    findNextPlayer: findNextPlayer,
+    isCheckmate: isCheckmate,
+    isKingChecked: isKingChecked,
+    canBlockCheck: canBlockCheck,
     isEnPassantMove: isEnPassantMove,
     findEnPassantPieceToCapture: findEnPassantPieceToCapture,
+    createInitialSquares: createInitialSquares,
+    findNextPlayer: findNextPlayer,
+    findPieceImgName: findPieceImgName,
   }
 
 }()
