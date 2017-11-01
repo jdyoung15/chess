@@ -252,7 +252,12 @@ var Chess = function() {
       col = which;
     } else {
       row = ColorEnum.properties[color].NON_PAWN_START_ROW;
-      col = PIECES_STARTING_ORDER.map((piece, i) => [piece, i]).filter(pair => pair[0] === type).map(pair => pair[1])[which]
+      col = 
+        PIECES_STARTING_ORDER
+          .map((piece, i) => [piece, i])
+          .filter(pair => pair[0] === type)
+          .map(pair => pair[1])
+          [which]
     }
 
     return row * NUM_ROWS + col;
