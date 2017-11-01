@@ -122,15 +122,22 @@
         handleClick(i) {
           const squares = this.state.squares.slice();
           const previousMoves = this.state.previousMoves.slice();
-          if (this.state.selectedSquare !== null) {
+          const selectedSquare = this.state.selectedSquare;
+          if (selectedSquare !== null) {
             // Piece has already been selected. Current selection indicates where the piece should be moved
-            if (Chess.isValidMove(this.state.selectedSquare, i, squares, previousMoves)) {
+            if (Chess.isValidMove(selectedSquare, i, squares, previousMoves)) {
               // todo if opponent captured
-              if (Chess.isEnPassantMove(this.state.selectedSquare, i, squares, previousMoves)) {
+              if (Chess.isEnPassantMove(selectedSquare, i, squares, previousMoves)) {
                 squares[Chess.findEnPassantPieceToCapture(i, this.state.currentPlayer)] = null;
               }
-              squares[i] = squares[this.state.selectedSquare];
-              squares[this.state.selectedSquare] = null;
+              if (Chess.isCastlingMove(selectedSquare, i, squares, previousMoves)) {
+                const rookStart = Chess.findCastlingRookStartPosition(selectedSquare, i, squares);
+                const rookEnd = Chess.findCastlingRookEndPosition(selectedSquare, i, squares);
+                squares[rookEnd] = squares[rookStart];
+                squares[rookStart] = null;
+              }
+              squares[i] = squares[selectedSquare];
+              squares[selectedSquare] = null;
               // TODO move this check to findValidMove?
               if (Chess.isKingChecked(this.state.currentPlayer, squares, previousMoves)) {
                 // this move will expose king to check or does not prevent check, it is not allowed
@@ -139,7 +146,7 @@
                 });
                 return;
               }
-              const move = [this.state.selectedSquare, i];
+              const move = [selectedSquare, i];
               previousMoves.push(move);
               this.setState({
                 squares: squares,
