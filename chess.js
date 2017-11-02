@@ -156,7 +156,7 @@ var Chess = function() {
         findValidMoves: function(position, board, previousMoves) {
           const color = board[position].color;
           let validMoves = findValidMovesAtCoordinates(this.coordinates, position, board)
-            .filter(newPosition => !willResultInCheck(position, newPosition, board[position.color], board.slice(), previousMoves));
+            .filter(newPosition => !isKingCheckedAtPosition(newPosition, color, simulateMove(position, newPosition, board), previousMoves));
 
           const castlingCoordinates = [
             [0, CastlingEnum.properties[CastlingEnum.KINGSIDE].numSquaresKingMove],
@@ -291,7 +291,10 @@ var Chess = function() {
   // returns a list of positions where the piece at the given position can move
   function findValidMoves(position, board, previousMoves) {
     const piece = board[position];
-    return PieceTypeEnum.properties[piece.type].findValidMoves(position, board, previousMoves);
+    const kingPosition = findKingPosition(piece.color, board);
+    return validMoves = PieceTypeEnum.properties[piece.type]
+      .findValidMoves(position, board, previousMoves)
+      .filter(s => !isKingCheckedAtPosition(kingPosition, piece.color, simulateMove(position, s, board), previousMoves));
   }
   
   function findValidMovesAtCoordinates(coordinates, position, board) {
@@ -373,10 +376,13 @@ var Chess = function() {
     const kingPosition = findKingPosition(color, board);
     return isKingCheckedAtPosition(kingPosition, color, board, previousMoves)
       && PieceTypeEnum.properties[PieceTypeEnum.KING].findValidMoves(kingPosition, board, previousMoves).length === 0
-      && positions
-        .filter(p => board[p] && board[p].color === color)
-        .filter(p => canBlockCheck(p, board, previousMoves))
-        .length === 0;
+      && positions.every(p => {
+           return !board[p] 
+             || board[p].color !== color
+             || PieceTypeEnum.properties[board[p].type]
+                  .findValidMoves(p, board, previousMoves)
+                  .every(s => isKingCheckedAtPosition(kingPosition, color, simulateMove(p, s, board), previousMoves));
+         });
   }
 
   function findKingPosition(color, board) {
@@ -415,24 +421,11 @@ var Chess = function() {
     return false;
   }
 
-  // assumes king is currently checked
-  function canBlockCheck(position, board, previousMoves) {
-    const color = board[position].color;
-    const kingPosition = findKingPosition(color, board);
-    return findValidMoves(position, board, previousMoves).some(s => {
-      let boardCopy = board.slice();
-      boardCopy[s] = boardCopy[position];
-      boardCopy[position] = null;
-      return !isKingCheckedAtPosition(kingPosition, color, boardCopy, previousMoves);
-    });
-  }
-
-  // modifies board
-  function willResultInCheck(oldPosition, newPosition, color, board, previousMoves) {
-    // set up board as if king had moved from oldPosition to newPosition
-    board[newPosition] = board[oldPosition];
-    board[oldPosition] = null;
-    return isKingCheckedAtPosition(newPosition, color, board, previousMoves);
+  function simulateMove(oldPosition, newPosition, board) {
+    const boardCopy = board.slice();
+    boardCopy[newPosition] = boardCopy[oldPosition];
+    boardCopy[oldPosition] = null;
+    return boardCopy;
   }
 
 
@@ -513,7 +506,6 @@ var Chess = function() {
     hasValidMoves: hasValidMoves,
     isCheckmate: isCheckmate,
     isKingChecked: isKingChecked,
-    canBlockCheck: canBlockCheck,
     isEnPassantMove: isEnPassantMove,
     findEnPassantPieceToCapture: findEnPassantPieceToCapture,
     createInitialSquares: createInitialSquares,

@@ -172,19 +172,8 @@
                 squares[rookEnd] = squares[rookStart];
                 squares[rookStart] = null;
               }
-              //if (Chess.isPawnPromotion(selectedSquare, i, squares) {
-              //  // bring up dialog displaying the promotion options
-              //}
               squares[i] = squares[selectedSquare];
               squares[selectedSquare] = null;
-              // TODO move this check to findValidMove?
-              if (Chess.isKingChecked(this.state.currentPlayer, squares, previousMoves)) {
-                // this move will expose king to check or does not prevent check, it is not allowed
-                this.setState({
-                  selectedSquare: null,
-                });
-                return;
-              }
               const move = [selectedSquare, i];
               previousMoves.push(move);
               this.setState({
@@ -203,18 +192,10 @@
             if (!Chess.hasValidMoves(i, squares, previousMoves)) {
               return;
             }
-            // selection must be king or appropriate piece if king is currently in check
-            if (Chess.isKingChecked(this.state.currentPlayer, squares, previousMoves)
-              && !Chess.canBlockCheck(i, squares, previousMoves)
-              && squares[i].type !== Chess.PieceTypeEnum.KING)
-            {
-              return;
-            }
             this.setState({
               selectedSquare: i,
             });
           }
-          return;
         }
 
         handlePawnPromotionClick(position, piece) {
