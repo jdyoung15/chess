@@ -56,6 +56,42 @@
       // React components
       // ##################################################
 
+      class PawnPromotionModal extends React.Component {
+        render() {
+          if (!this.props.show) {
+            return null;
+          }
+          const pawnPromotionChoicesJsx = Chess.PAWN_PROMOTION_CHOICES.map((choice, index) => {
+            let piece = new Chess.Piece(choice, this.props.color);
+            return (
+              <PawnPromotionChoice 
+                piece={piece}
+                onClick={() => this.props.onClick(piece)}
+                key={"pawn-promotion-choice-" + index}
+              />
+            );
+          });
+            
+          return (
+            <div className="backdrop">
+              <div className="modal">
+                {pawnPromotionChoicesJsx}
+              </div>
+            </div>
+          );
+        }
+      }
+
+      class PawnPromotionChoice extends React.Component {
+        render() {
+          return (
+            <button className={"pawn-promotion-choice"} onClick={this.props.onClick}>
+              <Piece type={this.props.piece.type} color={this.props.piece.color} />
+            </button>
+          );
+        }
+      }
+
       function Piece(props) {
         return (
           <div>
@@ -136,6 +172,9 @@
                 squares[rookEnd] = squares[rookStart];
                 squares[rookStart] = null;
               }
+              //if (Chess.isPawnPromotion(selectedSquare, i, squares) {
+              //  // bring up dialog displaying the promotion options
+              //}
               squares[i] = squares[selectedSquare];
               squares[selectedSquare] = null;
               // TODO move this check to findValidMove?
@@ -178,6 +217,14 @@
           return;
         }
 
+        handlePawnPromotionClick(position, piece) {
+          const squares = this.state.squares.slice();
+          squares[position] = piece;
+          this.setState({
+            squares: squares,
+          });
+        }
+
         render() {
           const squares = this.state.squares.slice();
           const previousMoves = this.state.previousMoves.slice();
@@ -188,6 +235,8 @@
           } else {
             displayText = "Turn: " + Chess.ColorEnum.properties[this.state.currentPlayer].name;
           }
+
+          const previousMoveEndSquare = previousMoves.length > 0 ? previousMoves[previousMoves.length - 1][1] : -1
 
           return (
             <div className="game">
@@ -200,6 +249,14 @@
               </div>
               <div className="game-info">
                 <div>{displayText}</div>
+              </div>
+              <div className="pawn-promo-modal">
+                <PawnPromotionModal 
+                  position={previousMoveEndSquare}
+                  onClick={piece => this.handlePawnPromotionClick(previousMoveEndSquare, piece)}
+                  show={Chess.isPawnPromotion(previousMoveEndSquare, squares)}
+                  color={Chess.findNextPlayer(this.state.currentPlayer)}
+                />
               </div>
             </div>
           );

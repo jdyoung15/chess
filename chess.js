@@ -188,6 +188,13 @@ var Chess = function() {
     PieceTypeEnum.ROOK,
   ];
 
+  const PAWN_PROMOTION_CHOICES = [
+    PieceTypeEnum.QUEEN,
+    PieceTypeEnum.ROOK,
+    PieceTypeEnum.BISHOP,
+    PieceTypeEnum.KNIGHT,
+  ];
+
 
   //
   // Castling functions
@@ -485,10 +492,20 @@ var Chess = function() {
     return "images/" + PieceTypeEnum.properties[type].name + "-" + ColorEnum.properties[color].name + ".png";
   }
 
+  function isPawnPromotion(position, squares) {
+    if (!squares[position]) {
+      return false;
+    }
+    const color = squares[position].color;
+    const opposingColor = findNextPlayer(color);
+    return squares[position].type === PieceTypeEnum.PAWN 
+      && findRow(position) === ColorEnum.properties[opposingColor].NON_PAWN_START_ROW;
+  }
 
   return {
     NUM_ROWS: NUM_ROWS,
     NUM_COLS: NUM_COLS,
+    PAWN_PROMOTION_CHOICES: PAWN_PROMOTION_CHOICES,
     Piece: Piece,
     ColorEnum: ColorEnum,
     PieceTypeEnum: PieceTypeEnum,
@@ -505,6 +522,7 @@ var Chess = function() {
     isCastlingMove: isCastlingMove,
     findCastlingRookStartPosition: findCastlingRookStartPosition,
     findCastlingRookEndPosition: findCastlingRookEndPosition,
+    isPawnPromotion: isPawnPromotion,
   }
 
 }()
