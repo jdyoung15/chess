@@ -94,8 +94,19 @@ ol, ul {
   background: #fff;
   border-radius: 5px;
   max-width: 500px;
-  min-height: 300px;
-  margin: 0 auto;
+  min-height: 100px;
+  margin-left: 136px;
+  margin-top: 336px;
   padding: 30px;
 }
 
+.pawn-promotion-choice:not(first-child) {
+  margin-left: 20px;
+  background: #fff;
+  border: 1px solid #999;
+}
+
+.pawn-promotion-choice:hover {
+  background: yellow;
+  cursor: pointer;
+}
