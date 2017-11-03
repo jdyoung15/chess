@@ -68,6 +68,7 @@
                 piece={piece}
                 onClick={() => this.props.onClick(piece)}
                 key={"pawn-promotion-choice-" + index}
+                id={this.props.position}
               />
             );
           });
@@ -86,28 +87,73 @@
         render() {
           return (
             <button className={"pawn-promotion-choice"} onClick={this.props.onClick}>
-              <Piece type={this.props.piece.type} color={this.props.piece.color} />
+              <Piece 
+                type={this.props.piece.type} 
+                color={this.props.piece.color} 
+                id={this.props.id} 
+                draggable={false} 
+              />
             </button>
           );
         }
       }
 
-      function Piece(props) {
-        return (
-          <div>
-            <img src={Chess.findPieceImgName(props.type, props.color)} className="piece"/>
-          </div>
-        );
+      class Piece extends React.Component {
+
+        constructor(props) {
+          super(props);
+          this.drag = this.drag.bind(this);
+        }
+
+        drag(e) {
+          e.dataTransfer.setData("text", e.target.id);
+          this.props.onDrag();
+        }
+
+        render() {
+          return (
+            <div>
+              <img src={Chess.findPieceImgName(this.props.type, this.props.color)} className="piece" draggable={this.props.draggable} onDragStart={this.drag} id={this.props.id} />
+            </div>
+          );
+        }
       }
       
-      function Square(props) {
-        const selected = props.isSelected ? " selected" : "";
-        const value = props.value ? <Piece type={props.value.type} color={props.value.color} /> : props.value;
-        return (
-          <button className={"square" + selected} onClick={props.onClick}>
-            {value}
-          </button>
-        );
+      class Square extends React.Component {
+
+        constructor(props) {
+          super(props);
+          this.drop = this.drop.bind(this);
+        }
+
+        drop(e) {
+          e.preventDefault();
+          var data = e.dataTransfer.getData("text");
+          this.props.onDrop();
+        }
+
+        allowDrop(e) {
+          e.preventDefault();
+        }
+
+        render() {
+          const selected = this.props.isSelected ? " selected" : "";
+          const value = 
+            this.props.value 
+            ? <Piece 
+                type={this.props.value.type} 
+                color={this.props.value.color} 
+                id={this.props.id} 
+                draggable={this.props.currentPlayer === this.props.value.color} 
+                onDrag={this.props.onDrag}
+              /> 
+            : this.props.value;
+          return (
+            <button className={"square" + selected} onClick={this.props.onClick} onDrop={this.drop} onDragOver={this.allowDrop}>
+              {value}
+            </button>
+          );
+        }
       }
 
       class Board extends React.Component {
@@ -118,6 +164,10 @@
               key={"square-" + i}
               onClick={() => this.props.onClick(i)}
               isSelected={this.props.selectedSquare === i}
+              onDrop={() => this.props.onDrop(i)}
+              onDrag={() => this.props.onDrag(i)}
+              currentPlayer={this.props.currentPlayer}
+              id={"" + i}
             />
           );
         }
@@ -159,6 +209,7 @@
           const squares = this.state.squares.slice();
           const previousMoves = this.state.previousMoves.slice();
           const selectedSquare = this.state.selectedSquare;
+          // todo: retrieve valid moves here?
           if (selectedSquare !== null) {
             // Piece has already been selected. Current selection indicates where the piece should be moved
             if (Chess.isValidMove(selectedSquare, i, squares, previousMoves)) {
@@ -198,6 +249,46 @@
           }
         }
 
+        //handleMove(oldPosition, newPosition, squares, previousMoves) {
+        //  const color = squares[oldPosition].color;
+        //  if (Chess.isValidMove(oldPosition, newPosition, squares, previousMoves)) {
+        //    // todo if opponent captured
+        //    if (Chess.isEnPassantMove(oldPosition, newPosition, squares, previousMoves)) {
+        //      squares[Chess.findEnPassantPieceToCapture(newPosition, color)] = null;
+        //    }
+        //    if (Chess.isCastlingMove(oldPosition, newPosition, squares, previousMoves)) {
+        //      const rookStart = Chess.findCastlingRookStartPosition(oldPosition, newPosition, squares);
+        //      const rookEnd = Chess.findCastlingRookEndPosition(oldPosition, newPosition, squares);
+        //      squares[rookEnd] = squares[rookStart];
+        //      squares[rookStart] = null;
+        //    }
+        //    squares[newPosition] = squares[oldPosition];
+        //    squares[oldPosition] = null;
+        //    const move = [oldPosition, newPosition];
+        //    previousMoves.push(move);
+        //    this.setState({
+        //      squares: squares,
+        //      selectedSquare: null,
+        //      currentPlayer: Chess.findNextPlayer(color),
+        //      previousMoves: previousMoves,
+        //    });
+        //  } else {
+        //    this.setState({
+        //      selectedSquare: null,
+        //    });
+        //  }
+        //}
+
+        handleDrop(position) {
+          this.handleClick(position);
+        }
+
+        handleDrag(position) {
+          this.setState({
+            selectedSquare: position,
+          });
+        }
+
         handlePawnPromotionClick(position, piece) {
           const squares = this.state.squares.slice();
           squares[position] = piece;
@@ -226,6 +317,9 @@
                   squares={squares}
                   onClick={i => this.handleClick(i)}
                   selectedSquare={this.state.selectedSquare}
+                  onDrop={position => this.handleDrop(position)}
+                  onDrag={position => this.handleDrag(position)}
+                  currentPlayer={this.state.currentPlayer}
                 />
               </div>
               <div className="game-info">
