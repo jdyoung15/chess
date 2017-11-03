@@ -56,104 +56,71 @@
       // React components
       // ##################################################
 
-      class PawnPromotionModal extends React.Component {
-        render() {
-          if (!this.props.show) {
-            return null;
-          }
-          const pawnPromotionChoicesJsx = Chess.PAWN_PROMOTION_CHOICES.map((choice, index) => {
-            let piece = new Chess.Piece(choice, this.props.color);
-            return (
-              <PawnPromotionChoice 
-                piece={piece}
-                onClick={() => this.props.onClick(piece)}
-                key={"pawn-promotion-choice-" + index}
-                id={this.props.position}
-              />
-            );
-          });
-            
-          return (
-            <div className="backdrop">
-              <div className="modal">
-                {pawnPromotionChoicesJsx}
-              </div>
-            </div>
-          );
+      function PawnPromotionModal(props) {
+        if (!props.show) {
+          return null;
         }
+        const pawnPromotionChoicesJsx = Chess.PAWN_PROMOTION_CHOICES.map((choice, index) => {
+          let piece = new Chess.Piece(choice, props.color);
+          return (
+            <PawnPromotionChoice 
+              piece={piece}
+              onClick={() => props.onClick(piece)}
+              key={"pawn-promotion-choice-" + index}
+              id={props.position}
+            />
+          );
+        });
+          
+        return (
+          <div className="backdrop">
+            <div className="modal">
+              {pawnPromotionChoicesJsx}
+            </div>
+          </div>
+        );
+        
       }
 
-      class PawnPromotionChoice extends React.Component {
-        render() {
-          return (
-            <button className={"pawn-promotion-choice"} onClick={this.props.onClick}>
-              <Piece 
-                type={this.props.piece.type} 
-                color={this.props.piece.color} 
-                id={this.props.id} 
-                draggable={false} 
-              />
-            </button>
-          );
-        }
+      function PawnPromotionChoice(props) {
+        return (
+          <button className={"pawn-promotion-choice"} onClick={props.onClick}>
+            <Piece 
+              type={props.piece.type} 
+              color={props.piece.color} 
+              id={props.id} 
+              draggable={false} 
+            />
+          </button>
+        );
       }
 
-      class Piece extends React.Component {
-
-        constructor(props) {
-          super(props);
-          this.drag = this.drag.bind(this);
-        }
-
-        drag(e) {
-          e.dataTransfer.setData("text", e.target.id);
-          this.props.onDrag();
-        }
-
-        render() {
-          return (
-            <div>
-              <img src={Chess.findPieceImgName(this.props.type, this.props.color)} className="piece" draggable={this.props.draggable} onDragStart={this.drag} id={this.props.id} />
-            </div>
-          );
-        }
+      function Piece(props) {
+        return (
+          <div>
+            <img src={Chess.findPieceImgName(props.type, props.color)} className="piece" draggable={props.draggable} onDragStart={props.onDrag} id={props.id} />
+          </div>
+        );
       }
       
-      class Square extends React.Component {
-
-        constructor(props) {
-          super(props);
-          this.drop = this.drop.bind(this);
-        }
-
-        drop(e) {
-          e.preventDefault();
-          var data = e.dataTransfer.getData("text");
-          this.props.onDrop();
-        }
-
-        allowDrop(e) {
-          e.preventDefault();
-        }
-
-        render() {
-          const selected = this.props.isSelected ? " selected" : "";
-          const value = 
-            this.props.value 
-            ? <Piece 
-                type={this.props.value.type} 
-                color={this.props.value.color} 
-                id={this.props.id} 
-                draggable={this.props.currentPlayer === this.props.value.color} 
-                onDrag={this.props.onDrag}
-              /> 
-            : this.props.value;
-          return (
-            <button className={"square" + selected} onClick={this.props.onClick} onDrop={this.drop} onDragOver={this.allowDrop}>
-              {value}
-            </button>
-          );
-        }
+      function Square(props) {
+        const selected = props.isSelected ? " selected" : "";
+        const value = 
+          props.value 
+          ? <Piece 
+              type={props.value.type} 
+              color={props.value.color} 
+              id={props.id} 
+              draggable={props.currentPlayer === props.value.color} 
+              onDrag={props.onDrag}
+            /> 
+          : props.value;
+        return (
+          <button className={"square" + selected} onClick={props.onClick} onDrop={props.onDrop} onDragOver={e => e.preventDefault()}>
+            {value}
+          </button>
+        );
+        
       }
 
       class Board extends React.Component {
