@@ -280,13 +280,13 @@ var Chess = function() {
   // Square and move functions
   //
 
-  function isValidMove(startPosition, endPosition, board, previousMoves) {
-    return findValidMoves(startPosition, board, previousMoves).includes(endPosition);
-  }
+  //function isValidMove(startPosition, endPosition, board, previousMoves) {
+  //  return findValidMoves(startPosition, board, previousMoves).includes(endPosition);
+  //}
 
-  function hasValidMoves(position, board, previousMoves) {
-    return findValidMoves(position, board, previousMoves).length > 0;
-  }
+  //function hasValidMoves(position, board, previousMoves) {
+  //  return findValidMoves(position, board, previousMoves).length > 0;
+  //}
 
   // returns a list of positions where the piece at the given position can move
   function findValidMoves(position, board, previousMoves) {
@@ -297,6 +297,16 @@ var Chess = function() {
       .filter(s => !isKingChecked(piece.color, simulateMove(position, s, board), previousMoves));
   }
   
+  function findAllValidMoves(color, board, previousMoves) {
+    return board
+      .map((s, i) => {
+        if (!s || s.color !== color) {
+          return [];
+        }
+        return findValidMoves(i, board, previousMoves);
+      });
+  }
+
   function findValidMovesAtCoordinates(coordinates, position, board) {
     return findSquaresAtCoordinates(coordinates, position)
       .filter(s => isValidSquare(board[s], board[position].color));
@@ -402,6 +412,10 @@ var Chess = function() {
   }
 
   function isKingCheckedAtPosition(position, color, board, previousMoves) {
+    // find opposing pieces
+    // for each opposing piece
+    //   if valid moves includes king position
+    //     return true
     for (let i = 0; i < board.length; i++) {
       let currentSquare = board[i];
       if (!currentSquare || currentSquare.color === color) {
@@ -502,8 +516,6 @@ var Chess = function() {
     Piece: Piece,
     ColorEnum: ColorEnum,
     PieceTypeEnum: PieceTypeEnum,
-    isValidMove: isValidMove,
-    hasValidMoves: hasValidMoves,
     isCheckmate: isCheckmate,
     isEnPassantMove: isEnPassantMove,
     findEnPassantPieceToCapture: findEnPassantPieceToCapture,
@@ -514,6 +526,7 @@ var Chess = function() {
     findCastlingRookStartPosition: findCastlingRookStartPosition,
     findCastlingRookEndPosition: findCastlingRookEndPosition,
     isPawnPromotion: isPawnPromotion,
+    findAllValidMoves: findAllValidMoves,
   }
 
 }()

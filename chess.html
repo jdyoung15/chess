@@ -108,7 +108,7 @@
           ? <Piece 
               type={props.value.type} 
               color={props.value.color} 
-              draggable={props.currentPlayer === props.value.color} 
+              draggable={props.draggable} 
               onDrag={props.onDrag}
             /> 
           : props.value;
@@ -130,7 +130,7 @@
               isSelected={this.props.selectedSquare === i}
               onDrop={() => this.props.onDrop(i)}
               onDrag={() => this.props.onDrag(i)}
-              currentPlayer={this.props.currentPlayer}
+              draggable={this.props.validMoves[i].length > 0}
             />
           );
         }
@@ -160,11 +160,15 @@
       class Game extends React.Component {
         constructor() {
           super();
+          const squares = Chess.createInitialSquares();
+          const currentPlayer = Chess.ColorEnum.WHITE;
+          const previousMoves = [];
           this.state = {
-            squares: Chess.createInitialSquares(),
+            squares: squares,
+            validMoves: Chess.findAllValidMoves(currentPlayer, squares, previousMoves),
             selectedSquare: null,
-            currentPlayer: Chess.ColorEnum.WHITE,
-            previousMoves: [],
+            currentPlayer: currentPlayer,
+            previousMoves: previousMoves,
           };
         }
 
@@ -175,7 +179,7 @@
           // todo: retrieve valid moves here?
           if (selectedSquare !== null) {
             // Piece has already been selected. Current selection indicates where the piece should be moved
-            if (Chess.isValidMove(selectedSquare, i, squares, previousMoves)) {
+            if (this.state.validMoves[selectedSquare].includes(i)) {
               // todo if opponent captured
               if (Chess.isEnPassantMove(selectedSquare, i, squares, previousMoves)) {
                 squares[Chess.findEnPassantPieceToCapture(i, this.state.currentPlayer)] = null;
@@ -190,10 +194,12 @@
               squares[selectedSquare] = null;
               const move = [selectedSquare, i];
               previousMoves.push(move);
+              const nextPlayer = Chess.findNextPlayer(this.state.currentPlayer);
               this.setState({
                 squares: squares,
+                validMoves: Chess.findAllValidMoves(nextPlayer, squares, previousMoves),
                 selectedSquare: null,
-                currentPlayer: Chess.findNextPlayer(this.state.currentPlayer),
+                currentPlayer: nextPlayer,
                 previousMoves: previousMoves,
               });
             } else {
@@ -201,46 +207,12 @@
                 selectedSquare: null,
               });
             }
-          } else if (squares[i] && squares[i].color === this.state.currentPlayer) {
-            // piece has been selected 
-            if (!Chess.hasValidMoves(i, squares, previousMoves)) {
-              return;
-            }
+          } else if (this.state.validMoves[i].length > 0) {
             this.setState({
               selectedSquare: i,
             });
           }
         }
-
-        //handleMove(oldPosition, newPosition, squares, previousMoves) {
-        //  const color = squares[oldPosition].color;
-        //  if (Chess.isValidMove(oldPosition, newPosition, squares, previousMoves)) {
-        //    // todo if opponent captured
-        //    if (Chess.isEnPassantMove(oldPosition, newPosition, squares, previousMoves)) {
-        //      squares[Chess.findEnPassantPieceToCapture(newPosition, color)] = null;
-        //    }
-        //    if (Chess.isCastlingMove(oldPosition, newPosition, squares, previousMoves)) {
-        //      const rookStart = Chess.findCastlingRookStartPosition(oldPosition, newPosition, squares);
-        //      const rookEnd = Chess.findCastlingRookEndPosition(oldPosition, newPosition, squares);
-        //      squares[rookEnd] = squares[rookStart];
-        //      squares[rookStart] = null;
-        //    }
-        //    squares[newPosition] = squares[oldPosition];
-        //    squares[oldPosition] = null;
-        //    const move = [oldPosition, newPosition];
-        //    previousMoves.push(move);
-        //    this.setState({
-        //      squares: squares,
-        //      selectedSquare: null,
-        //      currentPlayer: Chess.findNextPlayer(color),
-        //      previousMoves: previousMoves,
-        //    });
-        //  } else {
-        //    this.setState({
-        //      selectedSquare: null,
-        //    });
-        //  }
-        //}
 
         handleDrop(position) {
           this.handleClick(position);
@@ -255,8 +227,11 @@
         handlePawnPromotionClick(position, piece) {
           const squares = this.state.squares.slice();
           squares[position] = piece;
+          const currentPlayer = this.state.currentPlayer;
+          const previousMoves = this.state.previousMoves;
           this.setState({
             squares: squares,
+            validMoves: Chess.findAllValidMoves(currentPlayer, squares, previousMoves),
           });
         }
 
@@ -282,7 +257,7 @@
                   selectedSquare={this.state.selectedSquare}
                   onDrop={position => this.handleDrop(position)}
                   onDrag={position => this.handleDrag(position)}
-                  currentPlayer={this.state.currentPlayer}
+                  validMoves={this.state.validMoves}
                 />
               </div>
               <div className="game-info">
