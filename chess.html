@@ -130,7 +130,7 @@
               isSelected={this.props.selectedSquare === i}
               onDrop={() => this.props.onDrop(i)}
               onDrag={() => this.props.onDrag(i)}
-              draggable={this.props.validMoves[i].length > 0}
+              draggable={this.props.allValidMoves[i].length > 0}
             />
           );
         }
@@ -165,7 +165,7 @@
           const previousMoves = [];
           this.state = {
             squares: squares,
-            validMoves: Chess.findAllValidMoves(currentPlayer, squares, previousMoves),
+            allValidMoves: Chess.findAllValidMoves(currentPlayer, squares, previousMoves),
             selectedSquare: null,
             currentPlayer: currentPlayer,
             previousMoves: previousMoves,
@@ -179,7 +179,7 @@
           // todo: retrieve valid moves here?
           if (selectedSquare !== null) {
             // Piece has already been selected. Current selection indicates where the piece should be moved
-            if (this.state.validMoves[selectedSquare].includes(i)) {
+            if (this.state.allValidMoves[selectedSquare].includes(i)) {
               // todo if opponent captured
               if (Chess.isEnPassantMove(selectedSquare, i, squares, previousMoves)) {
                 squares[Chess.findEnPassantPieceToCapture(i, this.state.currentPlayer)] = null;
@@ -197,7 +197,7 @@
               const nextPlayer = Chess.findNextPlayer(this.state.currentPlayer);
               this.setState({
                 squares: squares,
-                validMoves: Chess.findAllValidMoves(nextPlayer, squares, previousMoves),
+                allValidMoves: Chess.findAllValidMoves(nextPlayer, squares, previousMoves),
                 selectedSquare: null,
                 currentPlayer: nextPlayer,
                 previousMoves: previousMoves,
@@ -207,7 +207,7 @@
                 selectedSquare: null,
               });
             }
-          } else if (this.state.validMoves[i].length > 0) {
+          } else if (this.state.allValidMoves[i].length > 0) {
             this.setState({
               selectedSquare: i,
             });
@@ -231,7 +231,7 @@
           const previousMoves = this.state.previousMoves;
           this.setState({
             squares: squares,
-            validMoves: Chess.findAllValidMoves(currentPlayer, squares, previousMoves),
+            allValidMoves: Chess.findAllValidMoves(currentPlayer, squares, previousMoves),
           });
         }
 
@@ -257,7 +257,7 @@
                   selectedSquare={this.state.selectedSquare}
                   onDrop={position => this.handleDrop(position)}
                   onDrag={position => this.handleDrag(position)}
-                  validMoves={this.state.validMoves}
+                  allValidMoves={this.state.allValidMoves}
                 />
               </div>
               <div className="game-info">

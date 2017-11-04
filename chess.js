@@ -81,7 +81,7 @@ var Chess = function() {
       0: {
         name: "pawn", 
         value: 0,
-        findValidMoves: function(position, board, previousMoves) {
+        findPossibleMoves: function(position, board, previousMoves) {
           let validMoves = [];
           const color = board[position].color;
           const pawnDirection = ColorEnum.properties[color].PAWN_DIRECTION;
@@ -121,41 +121,41 @@ var Chess = function() {
         name: "knight", 
         value: 1,
         coordinates: [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [2, -1], [2, 1], [1, -2], [1, 2]],
-        findValidMoves: function(position, board, previousMoves) {
-          return findValidMovesAtCoordinates(this.coordinates, position, board)
+        findPossibleMoves: function(position, board, previousMoves) {
+          return findPossibleMovesAtCoordinates(this.coordinates, position, board)
         }, 
       },
       2: {
         name: "bishop", 
         value: 2,
         directions: [[-1, -1], [-1, 1], [1, -1], [1, 1]],
-        findValidMoves: function(position, board, previousMoves) {
-          return findValidMovesInDirection(this.directions, position, board);
+        findPossibleMoves: function(position, board, previousMoves) {
+          return findPossibleMovesInDirection(this.directions, position, board);
         }, 
       },
       3: {
         name: "rook", 
         value: 3,
         directions: [[-1, 0], [1, 0], [0, -1], [0, 1]],
-        findValidMoves: function(position, board, previousMoves) {
-          return findValidMovesInDirection(this.directions, position, board);
+        findPossibleMoves: function(position, board, previousMoves) {
+          return findPossibleMovesInDirection(this.directions, position, board);
         }, 
       },
       4: {
         name: "queen", 
         value: 4,
         directions: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]],
-        findValidMoves: function(position, board, previousMoves) {
-          return findValidMovesInDirection(this.directions, position, board);
+        findPossibleMoves: function(position, board, previousMoves) {
+          return findPossibleMovesInDirection(this.directions, position, board);
         }, 
       },
       5: {
         name: "king", 
         value: 5,
         coordinates: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]],
-        findValidMoves: function(position, board, previousMoves) {
+        findPossibleMoves: function(position, board, previousMoves) {
           const color = board[position].color;
-          let validMoves = findValidMovesAtCoordinates(this.coordinates, position, board)
+          let validMoves = findPossibleMovesAtCoordinates(this.coordinates, position, board)
             .filter(newPosition => !isKingCheckedAtPosition(newPosition, color, simulateMove(position, newPosition, board), previousMoves));
 
           validMoves = validMoves.concat(
@@ -163,7 +163,7 @@ var Chess = function() {
 
           return validMoves;
         }, 
-        findPossibleMoves: function(position) {
+        findPossibleStandardMoves: function(position) {
           return findSquaresAtCoordinates(this.coordinates, position);
         },
       }
@@ -279,7 +279,7 @@ var Chess = function() {
 
 
   //
-  // Square and move functions
+  // Position and move functions
   //
 
   //function isValidMove(startPosition, endPosition, board, previousMoves) {
@@ -293,9 +293,8 @@ var Chess = function() {
   // returns a list of positions where the piece at the given position can move
   function findValidMoves(position, board, previousMoves) {
     const piece = board[position];
-    const kingPosition = findKingPosition(piece.color, board);
     return validMoves = PieceTypeEnum.properties[piece.type]
-      .findValidMoves(position, board, previousMoves)
+      .findPossibleMoves(position, board, previousMoves)
       .filter(s => !isKingChecked(piece.color, simulateMove(position, s, board), previousMoves));
   }
   
@@ -309,7 +308,7 @@ var Chess = function() {
       });
   }
 
-  function findValidMovesAtCoordinates(coordinates, position, board) {
+  function findPossibleMovesAtCoordinates(coordinates, position, board) {
     return findSquaresAtCoordinates(coordinates, position)
       .filter(s => isValidSquare(board[s], board[position].color));
   }
@@ -320,7 +319,7 @@ var Chess = function() {
       .filter(s => s);
   }
 
-  function findValidMovesInDirection(directions, position, board) {
+  function findPossibleMovesInDirection(directions, position, board) {
     return directions
       .map(d => findSquaresInDirection(position, d[0], d[1]))
       .map(squares => filterValidSquaresInDirection(squares, board, board[position].color))
@@ -387,12 +386,12 @@ var Chess = function() {
     // figure out squares that can block check
     const kingPosition = findKingPosition(color, board);
     return isKingCheckedAtPosition(kingPosition, color, board, previousMoves)
-      && PieceTypeEnum.properties[PieceTypeEnum.KING].findValidMoves(kingPosition, board, previousMoves).length === 0
+      && PieceTypeEnum.properties[PieceTypeEnum.KING].findPossibleMoves(kingPosition, board, previousMoves).length === 0
       && positions.every(p => {
            return !board[p] 
              || board[p].color !== color
              || PieceTypeEnum.properties[board[p].type]
-                  .findValidMoves(p, board, previousMoves)
+                  .findPossibleMoves(p, board, previousMoves)
                   .every(s => isKingCheckedAtPosition(kingPosition, color, simulateMove(p, s, board), previousMoves));
          });
   }
@@ -425,9 +424,9 @@ var Chess = function() {
       }
       let validMoves;
       if (currentSquare.type === PieceTypeEnum.KING) {
-        validMoves = PieceTypeEnum.properties[PieceTypeEnum.KING].findPossibleMoves(i);
+        validMoves = PieceTypeEnum.properties[PieceTypeEnum.KING].findPossibleStandardMoves(i);
       } else {
-        validMoves = PieceTypeEnum.properties[currentSquare.type].findValidMoves(i, board, previousMoves);
+        validMoves = PieceTypeEnum.properties[currentSquare.type].findPossibleMoves(i, board, previousMoves);
       }
 
       if (validMoves.includes(position)) {
