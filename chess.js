@@ -158,15 +158,8 @@ var Chess = function() {
           let validMoves = findValidMovesAtCoordinates(this.coordinates, position, board)
             .filter(newPosition => !isKingCheckedAtPosition(newPosition, color, simulateMove(position, newPosition, board), previousMoves));
 
-          const castlingCoordinates = [
-            [0, CastlingEnum.properties[CastlingEnum.KINGSIDE].numSquaresKingMove],
-            [0, -1 * CastlingEnum.properties[CastlingEnum.QUEENSIDE].numSquaresKingMove],
-          ];
-
           validMoves = validMoves.concat(
-            castlingCoordinates
-              .map(c => calculateNewPosition(position, c[0], c[1]))
-              .filter(p => p && isCastlingMove(position, p, board, previousMoves)));
+            findPossibleCastlingMoves(position).filter(p => p && isCastlingMove(position, p, board, previousMoves)));
 
           return validMoves;
         }, 
@@ -199,18 +192,27 @@ var Chess = function() {
   //
   // Castling functions
   //
+  function findPossibleCastlingMoves(kingStartPosition) {
+    const castlingCoordinates = [
+      [0, CastlingEnum.properties[CastlingEnum.KINGSIDE].numSquaresKingMove],
+      [0, -1 * CastlingEnum.properties[CastlingEnum.QUEENSIDE].numSquaresKingMove],
+    ];
+
+    return castlingCoordinates
+      .map(c => calculateNewPosition(kingStartPosition, c[0], c[1]));
+  }
 
   function isCastlingMove(startPosition, endPosition, board, previousMoves) {
     const color = board[startPosition].color;
     if (board[startPosition].type !== PieceTypeEnum.KING
       || isKingChecked(color, board, previousMoves) 
-      || hasPieceMoved(findStartPosition(PieceTypeEnum.KING, color, 0), previousMoves)) 
+      || hasPieceMoved(findStartPosition(PieceTypeEnum.KING, color, 0), previousMoves)
+      || !findPossibleCastlingMoves(startPosition).includes(endPosition))
     {
       return false;
     }
 
     const castling = startPosition < endPosition ? CastlingEnum.KINGSIDE : CastlingEnum.QUEENSIDE;
-
     const rookStartPosition = findStartPosition(PieceTypeEnum.ROOK, color, CastlingEnum.properties[castling].whichRook);
     const direction = CastlingEnum.properties[castling].direction;
 
