@@ -82,7 +82,7 @@ var Chess = function() {
         name: "pawn", 
         value: 0,
         findPossibleMoves: function(position, board, previousMoves) {
-          let validMoves = [];
+          let possibleMoves = [];
           const color = board[position].color;
           const pawnDirection = ColorEnum.properties[color].PAWN_DIRECTION;
           
@@ -96,7 +96,7 @@ var Chess = function() {
               [2 * pawnDirection, 0]
             );
           }
-          validMoves = validMoves.concat(
+          possibleMoves = possibleMoves.concat(
             findSquaresAtCoordinates(coordinatesMove, position)
               .filter(s => !board[s]));
 
@@ -106,11 +106,11 @@ var Chess = function() {
             [1 * pawnDirection, 1],
           ]
 
-          validMoves = validMoves.concat(
+          possibleMoves = possibleMoves.concat(
             findSquaresAtCoordinates(coordinatesAttack, position, board)
               .filter(s => (board[s] && board[s].color !== color) || isEnPassantMove(position, s, board, previousMoves)));
 
-          return validMoves;
+          return possibleMoves;
         }, 
         inStartRow: function(position, board) {
           const color = board[position].color;
@@ -155,13 +155,13 @@ var Chess = function() {
         coordinates: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]],
         findPossibleMoves: function(position, board, previousMoves) {
           const color = board[position].color;
-          let validMoves = findPossibleMovesAtCoordinates(this.coordinates, position, board)
+          let possibleMoves = findPossibleMovesAtCoordinates(this.coordinates, position, board)
             .filter(newPosition => !isKingCheckedAtPosition(newPosition, color, simulateMove(position, newPosition, board), previousMoves));
 
-          validMoves = validMoves.concat(
+          possibleMoves = possibleMoves.concat(
             findPossibleCastlingMoves(position).filter(p => p && isCastlingMove(position, p, board, previousMoves)));
 
-          return validMoves;
+          return possibleMoves;
         }, 
         findPossibleStandardMoves: function(position) {
           return findSquaresAtCoordinates(this.coordinates, position);
@@ -293,7 +293,7 @@ var Chess = function() {
   // returns a list of positions where the piece at the given position can move
   function findValidMoves(position, board, previousMoves) {
     const piece = board[position];
-    return validMoves = PieceTypeEnum.properties[piece.type]
+    return PieceTypeEnum.properties[piece.type]
       .findPossibleMoves(position, board, previousMoves)
       .filter(s => !isKingChecked(piece.color, simulateMove(position, s, board), previousMoves));
   }
@@ -310,7 +310,7 @@ var Chess = function() {
 
   function findPossibleMovesAtCoordinates(coordinates, position, board) {
     return findSquaresAtCoordinates(coordinates, position)
-      .filter(s => isValidSquare(board[s], board[position].color));
+      .filter(s => isPossibleMoveSquare(board[s], board[position].color));
   }
 
   function findSquaresAtCoordinates(coordinates, position) {
@@ -322,7 +322,7 @@ var Chess = function() {
   function findPossibleMovesInDirection(directions, position, board) {
     return directions
       .map(d => findSquaresInDirection(position, d[0], d[1]))
-      .map(squares => filterValidSquaresInDirection(squares, board, board[position].color))
+      .map(squares => filterPossibleSquaresInDirection(squares, board, board[position].color))
       .reduce((a, b) => a.concat(b));
   }
 
@@ -336,22 +336,22 @@ var Chess = function() {
     return squares;
   }
 
-  function filterValidSquaresInDirection(squares, board, color) {
-    const validSquares = [];
+  function filterPossibleSquaresInDirection(squares, board, color) {
+    const possibleSquares = [];
     for (let i = 0; i < squares.length; i++) {
       let s = squares[i];
-      if (isValidSquare(board[s], color)) {
-        validSquares.push(s);
+      if (isPossibleMoveSquare(board[s], color)) {
+        possibleSquares.push(s);
       }
       // if square is occupied, no further squares to consider; exit iteration
       if (board[s]) {
         break;
       }
     }
-    return validSquares
+    return possibleSquares
   }
 
-  function isValidSquare(square, color) {
+  function isPossibleMoveSquare(square, color) {
     return !square || square.color !== color;
   }
 
@@ -415,21 +415,21 @@ var Chess = function() {
   function isKingCheckedAtPosition(position, color, board, previousMoves) {
     // find opposing pieces
     // for each opposing piece
-    //   if valid moves includes king position
+    //   if possible moves includes king position
     //     return true
     for (let i = 0; i < board.length; i++) {
       let currentSquare = board[i];
       if (!currentSquare || currentSquare.color === color) {
         continue;
       }
-      let validMoves;
+      let possibleMoves;
       if (currentSquare.type === PieceTypeEnum.KING) {
-        validMoves = PieceTypeEnum.properties[PieceTypeEnum.KING].findPossibleStandardMoves(i);
+        possibleMoves = PieceTypeEnum.properties[PieceTypeEnum.KING].findPossibleStandardMoves(i);
       } else {
-        validMoves = PieceTypeEnum.properties[currentSquare.type].findPossibleMoves(i, board, previousMoves);
+        possibleMoves = PieceTypeEnum.properties[currentSquare.type].findPossibleMoves(i, board, previousMoves);
       }
 
-      if (validMoves.includes(position)) {
+      if (possibleMoves.includes(position)) {
         return true;
       }
     }
