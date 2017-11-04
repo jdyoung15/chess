@@ -67,7 +67,6 @@
               piece={piece}
               onClick={() => props.onClick(piece)}
               key={"pawn-promotion-choice-" + index}
-              id={props.position}
             />
           );
         });
@@ -88,7 +87,6 @@
             <Piece 
               type={props.piece.type} 
               color={props.piece.color} 
-              id={props.id} 
               draggable={false} 
             />
           </button>
@@ -98,7 +96,7 @@
       function Piece(props) {
         return (
           <div>
-            <img src={Chess.findPieceImgName(props.type, props.color)} className="piece" draggable={props.draggable} onDragStart={props.onDrag} id={props.id} />
+            <img src={Chess.findPieceImgName(props.type, props.color)} className="piece" draggable={props.draggable} onDragStart={props.onDrag} />
           </div>
         );
       }
@@ -110,7 +108,6 @@
           ? <Piece 
               type={props.value.type} 
               color={props.value.color} 
-              id={props.id} 
               draggable={props.currentPlayer === props.value.color} 
               onDrag={props.onDrag}
             /> 
@@ -134,7 +131,6 @@
               onDrop={() => this.props.onDrop(i)}
               onDrag={() => this.props.onDrag(i)}
               currentPlayer={this.props.currentPlayer}
-              id={"" + i}
             />
           );
         }

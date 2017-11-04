@@ -294,7 +294,7 @@ var Chess = function() {
     const kingPosition = findKingPosition(piece.color, board);
     return validMoves = PieceTypeEnum.properties[piece.type]
       .findValidMoves(position, board, previousMoves)
-      .filter(s => !isKingCheckedAtPosition(kingPosition, piece.color, simulateMove(position, s, board), previousMoves));
+      .filter(s => !isKingChecked(piece.color, simulateMove(position, s, board), previousMoves));
   }
   
   function findValidMovesAtCoordinates(coordinates, position, board) {
@@ -505,7 +505,6 @@ var Chess = function() {
     isValidMove: isValidMove,
     hasValidMoves: hasValidMoves,
     isCheckmate: isCheckmate,
-    isKingChecked: isKingChecked,
     isEnPassantMove: isEnPassantMove,
     findEnPassantPieceToCapture: findEnPassantPieceToCapture,
     createInitialSquares: createInitialSquares,
