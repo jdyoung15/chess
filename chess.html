@@ -173,7 +173,7 @@
         }
 
         handleClick(i) {
-          const squares = this.state.squares.slice();
+          let squares = this.state.squares.slice();
           const previousMoves = this.state.previousMoves.slice();
           const selectedSquare = this.state.selectedSquare;
           // todo: retrieve valid moves here?
@@ -190,8 +190,7 @@
                 squares[rookEnd] = squares[rookStart];
                 squares[rookStart] = null;
               }
-              squares[i] = squares[selectedSquare];
-              squares[selectedSquare] = null;
+              squares = Chess.updateBoard(selectedSquare, i, squares);
               const move = [selectedSquare, i];
               previousMoves.push(move);
               const nextPlayer = Chess.findNextPlayer(this.state.currentPlayer);
@@ -239,9 +238,13 @@
           const squares = this.state.squares.slice();
           const previousMoves = this.state.previousMoves.slice();
           let displayText;
-          if (Chess.isCheckmate(this.state.currentPlayer, squares, previousMoves)) {
-            const winner = Chess.findNextPlayer(this.state.currentPlayer);
-            displayText = "Winner: " + Chess.ColorEnum.properties[winner].name;
+          if (this.state.allValidMoves.every(m => m.length === 0)) {
+            if (Chess.isKingChecked(this.state.currentPlayer, squares, previousMoves)) {
+              const winner = Chess.findNextPlayer(this.state.currentPlayer);
+              displayText = "Winner: " + Chess.ColorEnum.properties[winner].name;
+            } else {
+              displayText = "Stalemate";
+            }
           } else {
             displayText = "Turn: " + Chess.ColorEnum.properties[this.state.currentPlayer].name;
           }

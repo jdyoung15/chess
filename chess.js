@@ -202,6 +202,41 @@ var Chess = function() {
   ];
 
 
+  // 
+  // En passant functions
+  //
+
+  function isEnPassantMove(startPosition, endPosition, board, previousMoves) {
+    const attackPawn = board[startPosition];
+    if (!attackPawn || attackPawn.type !== PieceTypeEnum.PAWN || previousMoves.length < 1) {
+      return false;
+    }
+
+    const color = board[startPosition].color;
+    const pawnDirection = ColorEnum.properties[color].PAWN_DIRECTION;
+
+    //  if en passant move, victim pawn should be directly behind attack pawn
+    const victimPawnPosition = findEnPassantVictimPosition(endPosition, color);
+    const victimPawn = board[victimPawnPosition];
+    if (!victimPawn || victimPawn.color === color || victimPawn.type !== PieceTypeEnum.PAWN) {
+      return false;
+    }
+
+    // if en passant move, victim pawn should have just moved from square in front of attack pawn
+    const victimPawnStartPosition = calculateNewPosition(endPosition, 1 * pawnDirection, 0);
+    const previousMove = previousMoves[previousMoves.length - 1];
+    if (previousMove[0] !== victimPawnStartPosition || previousMove[1] !== victimPawnPosition) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function findEnPassantVictimPosition(attackPawnPosition, color) {
+    return calculateNewPosition(attackPawnPosition, -1 * ColorEnum.properties[color].PAWN_DIRECTION, 0);
+  }
+  
+
   //
   // Castling functions
   //
@@ -215,11 +250,11 @@ var Chess = function() {
 
   function isCastlingMove(startPosition, endPosition, board, previousMoves) {
     const piece = board[startPosition];
-    const castling = startPosition < endPosition ? CastlingEnum.KINGSIDE : CastlingEnum.QUEENSIDE;
+    const castling = findCastlingSide(startPosition, endPosition);
     const kingStartPosition = CastlingEnum.properties[castling][piece.color].KING_OLD_POSITION;
 
     if (piece.type !== PieceTypeEnum.KING
-      || isKingChecked(startPosition, board, previousMoves) 
+      || isKingCheckedAtPosition(startPosition, board, previousMoves) 
       || hasPieceMoved(kingStartPosition, previousMoves)
       || !findPossibleCastlingMoves(piece.color).includes(endPosition))
     {
@@ -234,39 +269,34 @@ var Chess = function() {
       && CastlingEnum.properties[castling][piece.color].POSITIONS_BETWEEN.every(p => isEmptySquare(board[p]))
       // king is not in check during any intervening square
       && CastlingEnum.properties[castling][piece.color].KING_SQUARES_TRAVELED
-           .every(s => !isKingChecked(s, simulateMove(startPosition, s, board), previousMoves));
+           .every(s => !isKingCheckedAtPosition(s, updateBoard(startPosition, s, board.slice()), previousMoves));
 
+  }
+
+  function hasPieceMoved(startPosition, previousMoves) {
+    return previousMoves.some(m => m[0] === startPosition);
   }
 
   function findCastlingRookStartPosition(kingStartPosition, kingEndPosition, board) {
     const color = board[kingStartPosition].color;
-    const castling = kingStartPosition < kingEndPosition ? CastlingEnum.KINGSIDE : CastlingEnum.QUEENSIDE;
+    const castling = findCastlingSide(kingStartPosition, kingEndPosition);
     return CastlingEnum.properties[castling][color].ROOK_OLD_POSITION;
   }
 
   function findCastlingRookEndPosition(kingStartPosition, kingEndPosition, board) {
     const color = board[kingStartPosition].color;
-    const castling = kingStartPosition < kingEndPosition ? CastlingEnum.KINGSIDE : CastlingEnum.QUEENSIDE;
+    const castling = findCastlingSide(kingStartPosition, kingEndPosition);
     return CastlingEnum.properties[castling][color].ROOK_NEW_POSITION;
   }
 
-  function hasPieceMoved(startPosition, previousMoves) {
-    // return whether if previousMoves contains position as first move
-    return previousMoves.some(m => m[0] === startPosition);
+  function findCastlingSide(kingStartPosition, kingEndPosition) {
+    return kingStartPosition < kingEndPosition ? CastlingEnum.KINGSIDE : CastlingEnum.QUEENSIDE;
   }
 
 
   //
   // Position and move functions
   //
-
-  //function isValidMove(startPosition, endPosition, board, previousMoves) {
-  //  return findValidMoves(startPosition, board, previousMoves).includes(endPosition);
-  //}
-
-  //function hasValidMoves(position, board, previousMoves) {
-  //  return findValidMoves(position, board, previousMoves).length > 0;
-  //}
 
   function findAllValidMoves(color, board, previousMoves) {
     return board
@@ -288,9 +318,9 @@ var Chess = function() {
   // assumes that the piece to move is currently at oldPosition
   function isMoveValid(oldPosition, newPosition, board, previousMoves) {
     const piece = board[oldPosition];
-    const boardAfterMove = simulateMove(oldPosition, newPosition, board);
+    const boardAfterMove = updateBoard(oldPosition, newPosition, board.slice());
     const kingPosition = piece.type === PieceTypeEnum.KING ? newPosition : findKingPosition(piece.color, boardAfterMove);
-    return !isKingChecked(kingPosition, boardAfterMove, previousMoves);
+    return !isKingCheckedAtPosition(kingPosition, boardAfterMove, previousMoves);
   }
 
   function findPossibleMovesInDirections(directions, position, board, limit) {
@@ -341,12 +371,17 @@ var Chess = function() {
     return !isEmptySquare(square) && square.color !== color;
   }
 
+  function isCurrentPlayerSquare(square, color) {
+    return !isEmptySquare(square) && square.color === color;
+  }
+
   // may return null
   function calculateNewPosition(oldPosition, rows, cols) {
     const oldRow = findRow(oldPosition);
     const oldCol = findCol(oldPosition);
     const newRow = oldRow + rows;
     const newCol = oldCol + cols;
+    // exit if new position is outside board boundaries
     if (newRow < 0 || newRow >= NUM_ROWS || newCol < 0 || newCol >= NUM_COLS) {
       return null;
     }
@@ -363,32 +398,22 @@ var Chess = function() {
 
 
   //
-  // Check/checkmate functions
+  // Check functions
   //
 
-  function isCheckmate(color, board, previousMoves) {
-    // create array from 0 to 64
-    const positions = Array.apply(null, {length: NUM_ROWS * NUM_COLS}).map(Function.call, Number);
-    // figure out squares that can block check
-    const kingPosition = findKingPosition(color, board);
-    return isKingCheckedAtPosition(kingPosition, color, board, previousMoves)
-      && findValidMovesAtPosition(kingPosition, board, previousMoves).length === 0
-      && positions.every(p => {
-           return !board[p] 
-             || board[p].color !== color
-             || PieceTypeEnum.properties[board[p].type]
-                  .findPossibleMoves(p, board, previousMoves)
-                  .every(s => isKingCheckedAtPosition(kingPosition, color, simulateMove(p, s, board), previousMoves));
-         });
-  }
-
   function findKingPosition(color, board) {
-    return board.findIndex(s => s && s.color === color && s.type === PieceTypeEnum.KING);
+    return board.findIndex(s => isCurrentPlayerSquare(s, color) && s.type === PieceTypeEnum.KING);
   }
 
-  function isKingChecked(kingPosition, board, previousMoves) {
+  function isKingChecked(color, board, previousMoves) {
+    const kingPosition = findKingPosition(color, board);
+    return isKingCheckedAtPosition(kingPosition, board, previousMoves);
+  }
+
+  function isKingCheckedAtPosition(kingPosition, board, previousMoves) {
     const opponentColor = findNextPlayer(board[kingPosition].color);
-    const opponentPositions = board.map((s, i) => s && s.color === opponentColor && i).filter(p => p);
+    const positions = Array(NUM_ROWS * NUM_COLS).fill(null).map((each, i) => i);
+    const opponentPositions = positions.filter(p => board[p] && board[p].color === opponentColor);
     return opponentPositions.some(p => {
       let piece = board[p];
       let opponentPossibleMoves = piece.type === PieceTypeEnum.KING
@@ -399,89 +424,31 @@ var Chess = function() {
     });
   }
 
-  function isKingCheckedAtPosition(position, color, board, previousMoves) {
-    // find opposing pieces
-    // for each opposing piece
-    //   if possible moves includes king position
-    //     return true
-    for (let i = 0; i < board.length; i++) {
-      let currentSquare = board[i];
-      if (!currentSquare || currentSquare.color === color) {
-        continue;
-      }
-      let possibleMoves;
-      if (currentSquare.type === PieceTypeEnum.KING) {
-        possibleMoves = PieceTypeEnum.properties[PieceTypeEnum.KING].findPossibleStandardMoves(i, board);
-      } else {
-        possibleMoves = PieceTypeEnum.properties[currentSquare.type].findPossibleMoves(i, board, previousMoves);
-      }
-
-      if (possibleMoves.includes(position)) {
-        return true;
-      }
-    }
-    return false;
+  function updateBoard(oldPosition, newPosition, board) {
+    board[newPosition] = board[oldPosition];
+    board[oldPosition] = null;
+    return board;
   }
 
-  function simulateMove(oldPosition, newPosition, board) {
-    const boardCopy = board.slice();
-    boardCopy[newPosition] = boardCopy[oldPosition];
-    boardCopy[oldPosition] = null;
-    return boardCopy;
-  }
-
-
-  // 
-  // En passant functions
-  //
-
-  function isEnPassantMove(startPosition, endPosition, board, previousMoves) {
-    const attackPawn = board[startPosition];
-    if (!attackPawn || attackPawn.type !== PieceTypeEnum.PAWN || previousMoves.length < 1) {
-      return false;
-    }
-
-    const color = board[startPosition].color;
-    const pawnDirection = ColorEnum.properties[color].PAWN_DIRECTION;
-
-    //  if en passant move, victim pawn should be directly behind attack pawn
-    const victimPawnPosition = calculateNewPosition(endPosition, -1 * pawnDirection, 0);
-    const victimPawn = board[victimPawnPosition];
-    if (!victimPawn || victimPawn.color === color || victimPawn.type !== PieceTypeEnum.PAWN) {
-      return false;
-    }
-
-    // if en passant move, victim pawn should have just moved from square in front of attack pawn
-    const victimPawnStartPosition = calculateNewPosition(endPosition, 1 * pawnDirection, 0);
-    const previousMove = previousMoves[previousMoves.length - 1];
-    if (previousMove[0] !== victimPawnStartPosition || previousMove[1] !== victimPawnPosition) {
-      return false;
-    }
-
-    return true;
-  }
-
-  function findEnPassantVictimPosition(attackPawnPosition, color) {
-    return calculateNewPosition(attackPawnPosition, -1 * ColorEnum.properties[color].PAWN_DIRECTION, 0);
-  }
-  
 
   // 
   // Miscellaneous functions
   //
 
   function createInitialSquares() {
-    const board = Array(64).fill(null);
+    const board = Array(NUM_ROWS * NUM_COLS).fill(null);
 
-    for (let i = 0; i < NUM_ROWS; i++) {
-      board[i] = new Piece(PIECES_STARTING_ORDER[i], ColorEnum.BLACK);
-      board[calculateNewPosition(i, 7, 0)] = new Piece(PIECES_STARTING_ORDER[i], ColorEnum.WHITE);
-    }
+    PIECES_STARTING_ORDER.forEach((p, i) => {
+      let blackPiecePosition = i;
+      let whitePiecePosition = calculateNewPosition(blackPiecePosition, 7, 0);
+      board[blackPiecePosition] = new Piece(p, ColorEnum.BLACK);
+      board[whitePiecePosition] = new Piece(p, ColorEnum.WHITE);
 
-    for (let i = NUM_ROWS; i < NUM_ROWS * 2; i++) {
-      board[i] = new Piece(PieceTypeEnum.PAWN, ColorEnum.BLACK);
-      board[calculateNewPosition(i, 5, 0)] = new Piece(PieceTypeEnum.PAWN, ColorEnum.WHITE);
-    }
+      let blackPawnPosition = calculateNewPosition(blackPiecePosition, 1, 0);
+      let whitePawnPosition = calculateNewPosition(whitePiecePosition, -1, 0);
+      board[blackPawnPosition] = new Piece(PieceTypeEnum.PAWN, ColorEnum.BLACK);
+      board[whitePawnPosition] = new Piece(PieceTypeEnum.PAWN, ColorEnum.WHITE);
+    });
 
     return board;
   }
@@ -498,9 +465,10 @@ var Chess = function() {
     if (!squares[position]) {
       return false;
     }
-    const color = squares[position].color;
+    const piece = squares[position];
+    const color = piece.color;
     const opposingColor = findNextPlayer(color);
-    return squares[position].type === PieceTypeEnum.PAWN 
+    return piece.type === PieceTypeEnum.PAWN 
       && findRow(position) === ColorEnum.properties[opposingColor].NON_PAWN_START_ROW;
   }
 
@@ -511,7 +479,6 @@ var Chess = function() {
     Piece: Piece,
     ColorEnum: ColorEnum,
     PieceTypeEnum: PieceTypeEnum,
-    isCheckmate: isCheckmate,
     isEnPassantMove: isEnPassantMove,
     findEnPassantVictimPosition: findEnPassantVictimPosition,
     createInitialSquares: createInitialSquares,
@@ -522,6 +489,8 @@ var Chess = function() {
     findCastlingRookEndPosition: findCastlingRookEndPosition,
     isPawnPromotion: isPawnPromotion,
     findAllValidMoves: findAllValidMoves,
+    isKingChecked: isKingChecked,
+    updateBoard: updateBoard,
   }
 
 }()
