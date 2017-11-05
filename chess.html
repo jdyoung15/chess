@@ -182,7 +182,7 @@
             if (this.state.allValidMoves[selectedSquare].includes(i)) {
               // todo if opponent captured
               if (Chess.isEnPassantMove(selectedSquare, i, squares, previousMoves)) {
-                squares[Chess.findEnPassantPieceToCapture(i, this.state.currentPlayer)] = null;
+                squares[Chess.findEnPassantVictimPosition(i, this.state.currentPlayer)] = null;
               }
               if (Chess.isCastlingMove(selectedSquare, i, squares, previousMoves)) {
                 const rookStart = Chess.findCastlingRookStartPosition(selectedSquare, i, squares);
