@@ -6,6 +6,7 @@ var Chess = function() {
 
   const NUM_ROWS = 8;
   const NUM_COLS = 8;
+  const NUM_SQUARES = 64;
 
 
   // 
@@ -222,7 +223,7 @@ var Chess = function() {
       return false;
     }
 
-    // if en passant move, victim pawn should have just moved from square in front of attack pawn
+    // if en passant move, victim pawn must have just moved from square in front of attack pawn
     const victimPawnStartPosition = calculateNewPosition(endPosition, 1 * pawnDirection, 0);
     const previousMove = previousMoves[previousMoves.length - 1];
     if (previousMove[0] !== victimPawnStartPosition || previousMove[1] !== victimPawnPosition) {
@@ -412,7 +413,7 @@ var Chess = function() {
 
   function isKingCheckedAtPosition(kingPosition, board, previousMoves) {
     const opponentColor = findNextPlayer(board[kingPosition].color);
-    const positions = Array(NUM_ROWS * NUM_COLS).fill(null).map((each, i) => i);
+    const positions = Array(NUM_SQUARES).fill(null).map((each, i) => i);
     const opponentPositions = positions.filter(p => board[p] && board[p].color === opponentColor);
     return opponentPositions.some(p => {
       let piece = board[p];
@@ -436,7 +437,7 @@ var Chess = function() {
   //
 
   function createInitialSquares() {
-    const board = Array(NUM_ROWS * NUM_COLS).fill(null);
+    const board = Array(NUM_SQUARES).fill(null);
 
     PIECES_STARTING_ORDER.forEach((p, i) => {
       let blackPiecePosition = i;
