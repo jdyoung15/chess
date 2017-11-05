@@ -30,21 +30,43 @@ var Chess = function() {
     properties: {
       0: {
         name: "kingside",
-        direction: 1, // positive value since king moves right
-        numSquaresBetween: 2,
-        numSquaresKingMove: 2,
-        numSquaresRookMove: 2,
-        whichRook: 1,
         value: 0,
+        0: { // white
+          KING_OLD_POSITION: 60,
+          KING_NEW_POSITION: 62,
+          ROOK_OLD_POSITION: 63,
+          ROOK_NEW_POSITION: 61,
+          POSITIONS_BETWEEN: [61, 62],
+          KING_SQUARES_TRAVELED: [61, 62],
+        },
+        1: { // black
+          KING_OLD_POSITION: 4,
+          KING_NEW_POSITION: 6,
+          ROOK_OLD_POSITION: 7,
+          ROOK_NEW_POSITION: 5,
+          POSITIONS_BETWEEN: [5, 6],
+          KING_SQUARES_TRAVELED: [5, 6],
+        },
       },
       1: {
         name: "queenside",
-        direction: -1, // negative value since king moves right
-        numSquaresBetween: 3,
-        numSquaresKingMove: 2,
-        numSquaresRookMove: 3,
-        whichRook: 0,
         value: 1,
+        0: { // white
+          KING_OLD_POSITION: 60,
+          KING_NEW_POSITION: 58,
+          ROOK_OLD_POSITION: 56,
+          ROOK_NEW_POSITION: 59,
+          POSITIONS_BETWEEN: [57, 58, 59],
+          KING_SQUARES_TRAVELED: [59, 58],
+        },
+        1: { // black
+          KING_OLD_POSITION: 4,
+          KING_NEW_POSITION: 2,
+          ROOK_OLD_POSITION: 0,
+          ROOK_NEW_POSITION: 3,
+          POSITIONS_BETWEEN: [1, 2, 3],
+          KING_SQUARES_TRAVELED: [3, 2],
+        },
       },
     },
   };
@@ -58,14 +80,14 @@ var Chess = function() {
         NON_PAWN_START_ROW: 7, 
         PAWN_START_ROW: 6,
         PAWN_DIRECTION: -1, // up 
-        value: 0
+        value: 0,
       },
       1: {
         name: "black", 
         NON_PAWN_START_ROW: 0, 
         PAWN_START_ROW: 1,
         PAWN_DIRECTION: 1, // down
-        value: 1
+        value: 1,
       }
     }
   };
@@ -149,7 +171,8 @@ var Chess = function() {
           let possibleMoves = this.findPossibleStandardMoves(position, board);
 
           possibleMoves = possibleMoves.concat(
-            findPossibleCastlingMoves(position).filter(p => p && isCastlingMove(position, p, board, previousMoves)));
+            findPossibleCastlingMoves(color)
+              .filter(p => p && isCastlingMove(position, p, board, previousMoves)));
 
           return possibleMoves;
         }, 
@@ -182,84 +205,49 @@ var Chess = function() {
   //
   // Castling functions
   //
-  function findPossibleCastlingMoves(kingStartPosition) {
-    const castlingCoordinates = [
-      [0, CastlingEnum.properties[CastlingEnum.KINGSIDE].numSquaresKingMove],
-      [0, -1 * CastlingEnum.properties[CastlingEnum.QUEENSIDE].numSquaresKingMove],
-    ];
 
-    return castlingCoordinates
-      .map(c => calculateNewPosition(kingStartPosition, c[0], c[1]));
+  function findPossibleCastlingMoves(color) {
+    return [
+      CastlingEnum.properties[CastlingEnum.KINGSIDE][color].KING_NEW_POSITION,
+      CastlingEnum.properties[CastlingEnum.QUEENSIDE][color].KING_NEW_POSITION,
+    ];
   }
 
   function isCastlingMove(startPosition, endPosition, board, previousMoves) {
-    const color = board[startPosition].color;
-    if (board[startPosition].type !== PieceTypeEnum.KING
+    const piece = board[startPosition];
+    const castling = startPosition < endPosition ? CastlingEnum.KINGSIDE : CastlingEnum.QUEENSIDE;
+    const kingStartPosition = CastlingEnum.properties[castling][piece.color].KING_OLD_POSITION;
+
+    if (piece.type !== PieceTypeEnum.KING
       || isKingChecked(startPosition, board, previousMoves) 
-      || hasPieceMoved(findStartPosition(PieceTypeEnum.KING, color, 0), previousMoves)
-      || !findPossibleCastlingMoves(startPosition).includes(endPosition))
+      || hasPieceMoved(kingStartPosition, previousMoves)
+      || !findPossibleCastlingMoves(piece.color).includes(endPosition))
     {
       return false;
     }
 
-    const castling = startPosition < endPosition ? CastlingEnum.KINGSIDE : CastlingEnum.QUEENSIDE;
-    const rookStartPosition = findStartPosition(PieceTypeEnum.ROOK, color, CastlingEnum.properties[castling].whichRook);
-    const direction = CastlingEnum.properties[castling].direction;
+    const rookStartPosition = CastlingEnum.properties[castling][piece.color].ROOK_OLD_POSITION;
 
     return board[rookStartPosition]
       && !hasPieceMoved(rookStartPosition, previousMoves)
       // number of pieces between king and rook is 0
-      && createArrayRange(startPosition + 1 * direction, rookStartPosition).every(s => !board[s])
+      && CastlingEnum.properties[castling][piece.color].POSITIONS_BETWEEN.every(p => isEmptySquare(board[p]))
       // king is not in check during any intervening square
-      && createArrayRange(startPosition + 1 * direction, endPosition + 1 * direction)
-           .every(s => {
-             let boardCopy = board.slice();
-             boardCopy[s] = boardCopy[startPosition];
-             boardCopy[startPosition] = null;
-             return !isKingChecked(s, boardCopy, previousMoves);
-           });
-  }
+      && CastlingEnum.properties[castling][piece.color].KING_SQUARES_TRAVELED
+           .every(s => !isKingChecked(s, simulateMove(startPosition, s, board), previousMoves));
 
-  // start inclusive, end noninclusive
-  function createArrayRange(start, end) {
-    const direction = end < start ? -1 : 1;
-    return Array(Math.abs(end - start)).fill(null).map((n, i) => start + i * direction);
   }
 
   function findCastlingRookStartPosition(kingStartPosition, kingEndPosition, board) {
     const color = board[kingStartPosition].color;
     const castling = kingStartPosition < kingEndPosition ? CastlingEnum.KINGSIDE : CastlingEnum.QUEENSIDE;
-    const direction = CastlingEnum.properties[castling].direction;
-    return findStartPosition(PieceTypeEnum.ROOK, color, CastlingEnum.properties[castling].whichRook);
+    return CastlingEnum.properties[castling][color].ROOK_OLD_POSITION;
   }
 
   function findCastlingRookEndPosition(kingStartPosition, kingEndPosition, board) {
+    const color = board[kingStartPosition].color;
     const castling = kingStartPosition < kingEndPosition ? CastlingEnum.KINGSIDE : CastlingEnum.QUEENSIDE;
-    const direction = CastlingEnum.properties[castling].direction;
-    const numSquaresRookMove = CastlingEnum.properties[castling].numSquaresRookMove;
-
-    const startPosition = findCastlingRookStartPosition(kingStartPosition, kingEndPosition, board);
-    return calculateNewPosition(startPosition, 0, numSquaresRookMove * direction * -1);
-  }
-
-  function findStartPosition(type, color, which) {
-    // find starting row, from color
-    let row;
-    let col;
-    if (type === PieceTypeEnum.PAWN) {
-      row = ColorEnum.properties[color].PAWN_START_ROW
-      col = which;
-    } else {
-      row = ColorEnum.properties[color].NON_PAWN_START_ROW;
-      col = 
-        PIECES_STARTING_ORDER
-          .map((piece, i) => [piece, i])
-          .filter(pair => pair[0] === type)
-          .map(pair => pair[1])
-          [which]
-    }
-
-    return row * NUM_ROWS + col;
+    return CastlingEnum.properties[castling][color].ROOK_NEW_POSITION;
   }
 
   function hasPieceMoved(startPosition, previousMoves) {
