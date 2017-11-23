@@ -250,7 +250,7 @@ var Chess = function() {
   //
 
   /**
-   * For a king of @color, returns the two possible positions the king can make if castling.
+   * For a king of @color, returns the two possible positions the king can move to if castling.
    * NOTE: This does not ensure that castling is possible for this king. The positions are returned regardless.
    */
   function findPossibleCastlingPositions(color) {
