@@ -127,10 +127,14 @@
           const currentPlayer = Chess.ColorEnum.WHITE;
           const previousMoves = [];
           this.state = {
+            // each square of the game board
             squares: squares,
+            // for each square, enumerates all valid squares that can be moved to
             allValidMoves: Chess.findAllValidMovePositions(currentPlayer, squares, previousMoves),
+            // the square that the player has selected to move from
             selectedSquare: null,
             currentPlayer: currentPlayer,
+            // all previous moves, each move represented as a list containing the from position and to position
             previousMoves: previousMoves,
           };
         }

@@ -6,7 +6,7 @@ var Chess = function() {
 
   const NUM_ROWS = 8;
   const NUM_COLS = 8;
-  const NUM_SQUARES = 64;
+  const NUM_SQUARES = NUM_ROWS * NUM_COLS;
 
 
   // 
@@ -207,6 +207,12 @@ var Chess = function() {
   // En passant functions
   //
 
+  /**
+   * Returns whether the move from @fromPosition to @toPosition is a valid en passant move:
+   *   - the victim pawn must be adjacent to attacking pawn 
+   *   - the victim pawn, in the move immediately prior, must have moved two squares from start 
+   *     row to current position
+   */
   function isEnPassantMove(fromPosition, toPosition, board, previousMoves) {
     const attackPawn = board[fromPosition];
     if (!attackPawn || attackPawn.type !== PieceTypeEnum.PAWN || previousMoves.length < 1) {
@@ -233,6 +239,7 @@ var Chess = function() {
     return true;
   }
 
+  /** For a valid en passant move, returns the captured pawn's position given the attacking pawn's position. */
   function findEnPassantVictimPosition(attackPawnPosition, color) {
     return calculatePosition(attackPawnPosition, -1 * ColorEnum.properties[color].PAWN_DIRECTION, 0);
   }
@@ -242,6 +249,10 @@ var Chess = function() {
   // Castling functions
   //
 
+  /**
+   * For a king of @color, returns the two possible positions the king can make if castling.
+   * NOTE: This does not ensure that castling is possible for this king. The positions are returned regardless.
+   */
   function findPossibleCastlingPositions(color) {
     return [
       CastlingEnum.properties[CastlingEnum.KINGSIDE][color].KING_NEW_POSITION,
@@ -249,6 +260,13 @@ var Chess = function() {
     ];
   }
 
+  /** 
+   * Returns whether the move @fromPosition --> @toPosition is a valid castling move:
+   *   - the king and rook have not moved since the start of the game
+   *   - no pieces between king and rook
+   *   - king is not currently in check
+   *   - king does not pass through any square that is attacked by opponent
+   */
   function isCastlingMove(fromPosition, toPosition, board, previousMoves) {
     const piece = board[fromPosition];
     const castling = findCastlingSide(fromPosition, toPosition);
@@ -299,6 +317,14 @@ var Chess = function() {
   // Position and move functions
   //
 
+  /**
+   * For each square of the board, returns the valid squares that can be moved to from that square.
+   * A square will have valid moves only if:
+   *   - it is occupied by a piece
+   *   - the piece belongs to the current player
+   *   - the piece is allowed to move, e.g. it does not expose the king to check
+   *   - there is another square that the piece can move to
+   */
   function findAllValidMovePositions(color, board, previousMoves) {
     return board
       .map((square, i) => {
@@ -309,14 +335,23 @@ var Chess = function() {
       });
   }
 
-  // returns a list of positions where the piece at the given position can move
+  /** 
+   * For the square at @fromPosition, finds the valid squares that can be moved to from this square.
+   * Assumes that, at this square, there is a piece belonging to the current player.
+   */
   function findValidMovePositions(fromPosition, board, previousMoves) {
     const piece = board[fromPosition];
     const positions = PieceTypeEnum.properties[piece.type].findPossibleMovePositions(fromPosition, board, previousMoves);
     return positions.filter(toPosition => isMoveValid(fromPosition, toPosition, board, previousMoves));
   }
 
-  // assumes that the piece to move is currently at fromPosition
+  /**
+   * Returns whether the move @fromPosition --> @toPosition is valid:
+   *   - it does not expose its own king to check
+   *   - or, if king is already in check, it either blocks or captures the checking piece
+   *
+   * Assumes that, at @fromPosition, there is a piece belonging to the current player.
+   */
   function isMoveValid(fromPosition, toPosition, board, previousMoves) {
     const piece = board[fromPosition];
     const boardAfterMove = updateBoard(fromPosition, toPosition, board.slice());
@@ -324,6 +359,9 @@ var Chess = function() {
     return !isKingCheckedAtPosition(kingPosition, boardAfterMove, previousMoves);
   }
 
+  /**
+   * For the piece at @fromPosition, finds all squares in each given direction that are possible to move to.
+   */
   function findPossibleMovePositions(directions, fromPosition, board, limit) {
     const piece = board[fromPosition];
     return directions
@@ -332,6 +370,14 @@ var Chess = function() {
       .reduce((arrayLeft, arrayRight) => arrayLeft.concat(arrayRight));
   }
 
+  /** 
+   * For the piece at @fromPosition, finds all square in the given direction that are possible to move to.
+   * A direction is represented by a pair of numbers, 
+   *   e.g. [1, -1] which means the diagonal extending to the upper left of the piece (1 row up, 1 col left)
+   *        [-1, 0] which means the vertical direction directly below the piece (1 row down, 0 col lateral)
+   * The limit dictates how many squares to check in the given direction. For a king, the limit would be 1.
+   * For a bishop/rook/queen, it would be unlimited.
+   */
   function findMovePositions(fromPosition, direction, limit) {
     const rowIncrement = direction[0];
     const colIncrement = direction[1];
@@ -353,7 +399,7 @@ var Chess = function() {
       if (isPossibleMoveSquare(board[movePosition], color)) {
         filteredMovePositions.push(movePosition);
       }
-      // if square is occupied, no further squares to consider; exit iteration
+      // if square is occupied, no further squares to consider because they are blocked; exit iteration
       if (!isEmptySquare(board[movePosition])) {
         break;
       }
@@ -377,7 +423,13 @@ var Chess = function() {
     return !isEmptySquare(square) && square.color === color;
   }
 
-  // may return null
+  /**
+   * Given a square at @fromPosition and desired row/col offsets, returns the new position. 
+   * For @rows, negative values denote leftward direction.
+   * For @cols, negative values denote downward direction.
+   * 
+   * NOTE: Returns null if the new position is outside the board boundaries.
+   */
   function calculatePosition(fromPosition, rows, cols) {
     const fromRow = findRow(fromPosition);
     const fromCol = findCol(fromPosition);
@@ -426,6 +478,7 @@ var Chess = function() {
     });
   }
 
+  /** Given a move @fromPosition --> @toPosition, returns the board state as if that move were executed. */
   function updateBoard(fromPosition, toPosition, board) {
     board[toPosition] = board[fromPosition];
     board[fromPosition] = null;
