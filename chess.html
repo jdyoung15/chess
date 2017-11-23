@@ -135,49 +135,70 @@
           };
         }
 
-        handleClick(i) {
-          let squares = this.state.squares.slice();
-          const previousMoves = this.state.previousMoves.slice();
-          const selectedSquare = this.state.selectedSquare;
-          // todo: retrieve valid moves here?
-          if (selectedSquare !== null) {
-            // Piece has already been selected. Current selection indicates where the piece should be moved
-            if (this.state.allValidMoves[selectedSquare].includes(i)) {
-              // todo if opponent captured
-              if (Chess.isEnPassantMove(selectedSquare, i, squares, previousMoves)) {
-                squares[Chess.findEnPassantVictimPosition(i, this.state.currentPlayer)] = null;
-              }
-              if (Chess.isCastlingMove(selectedSquare, i, squares, previousMoves)) {
-                const rookStart = Chess.findCastlingRookStartPosition(selectedSquare, i, squares);
-                const rookEnd = Chess.findCastlingRookEndPosition(selectedSquare, i, squares);
-                squares[rookEnd] = squares[rookStart];
-                squares[rookStart] = null;
-              }
-              squares = Chess.updateBoard(selectedSquare, i, squares);
-              const move = [selectedSquare, i];
-              previousMoves.push(move);
-              const nextPlayer = Chess.findNextPlayer(this.state.currentPlayer);
-              this.setState({
-                squares: squares,
-                allValidMoves: Chess.findAllValidMovePositions(nextPlayer, squares, previousMoves),
-                selectedSquare: null,
-                currentPlayer: nextPlayer,
-                previousMoves: previousMoves,
-              });
-            } else {
-              this.setState({
-                selectedSquare: null,
-              });
-            }
-          } else if (this.state.allValidMoves[i].length > 0) {
+        handleClick(position) {
+          // If a piece is already selected, the input position indicates where the piece should be moved
+          if (this.state.selectedSquare !== null) {
+            this.executeMove(
+              this.state.selectedSquare, 
+              position, 
+              this.state.squares.slice(), 
+              this.state.previousMoves.slice(), 
+              this.state.allValidMoves.slice(),
+              this.state.currentPlayer);
+          } 
+          // Piece is selected (but only if it has valid moves)
+          else if (this.state.allValidMoves[position].length > 0) {
             this.setState({
-              selectedSquare: i,
+              selectedSquare: position,
             });
           }
         }
 
+        executeMove(fromPosition, toPosition, squares, previousMoves, allValidMoves,  currentPlayer) {
+          // if valid move, change state to reflect the move from old position to new position
+          if (allValidMoves[fromPosition].includes(toPosition)) {
+            if (Chess.isEnPassantMove(fromPosition, toPosition, squares, previousMoves)) {
+              // enemy pawn is captured in en passant move even though square is not directly attacked
+              squares[Chess.findEnPassantVictimPosition(toPosition, currentPlayer)] = null;
+            }
+
+            if (Chess.isCastlingMove(fromPosition, toPosition, squares, previousMoves)) {
+              const rookStart = Chess.findCastlingRookStartPosition(fromPosition, toPosition, squares);
+              const rookEnd = Chess.findCastlingRookEndPosition(fromPosition, toPosition, squares);
+              squares = Chess.updateBoard(rookStart, rookEnd, squares);
+            }
+
+            squares = Chess.updateBoard(fromPosition, toPosition, squares);
+            const move = [fromPosition, toPosition];
+            previousMoves.push(move);
+            const nextPlayer = Chess.findNextPlayer(currentPlayer);
+
+            this.setState({
+              squares: squares,
+              allValidMoves: Chess.findAllValidMovePositions(nextPlayer, squares, previousMoves),
+              selectedSquare: null,
+              currentPlayer: nextPlayer,
+              previousMoves: previousMoves,
+            });
+          } 
+          // invalid move
+          else {
+            this.setState({
+              selectedSquare: null,
+            });
+          }
+        }
+
+
         handleDrop(position) {
-          this.handleClick(position);
+          this.executeMove(
+            this.state.selectedSquare, 
+            position, 
+            this.state.squares.slice(),
+            this.state.previousMoves.slice(),
+            this.state.allValidMoves,
+            this.state.currentPlayer
+          );
         }
 
         handleDrag(position) {
